@@ -45,7 +45,7 @@ function buildOrganization(key: string, records: AccountRecord[]): ResolvedOrgan
   const allArr = records.map((record) => record.arr).filter((value): value is number => value !== undefined);
   const dates = records.map((record) => record.lastContactDate).filter((value): value is string => value !== undefined).sort();
   const excluded = conflicts.length > 0 || issues.some((item) => item.excludesFromRanking);
-  const confidence = excluded ? "low" : issues.some((item) => item.severity === "medium") ? "medium" : "high";
+  const confidence = excluded ? "low" : issues.length > 0 ? "medium" : "high";
 
   return {
     id: stableId("org", key),
