@@ -1,0 +1,2162 @@
+[
+  {
+    "account_name": "NPR",
+    "event_type": "email_open",
+    "event_date": "2026-06-27",
+    "event_count": 44
+  },
+  {
+    "account_name": "Make-A-Wish America",
+    "event_type": "email_open",
+    "event_date": "2026-07-03",
+    "event_count": 9
+  },
+  {
+    "account_name": "RESULTS FOR AMERICA",
+    "event_type": "email_open",
+    "event_date": "2026-05-22",
+    "event_count": 25
+  },
+  {
+    "account_name": "St. Jude Children's Research Hospital",
+    "event_type": "email_open",
+    "event_date": "2026-07-05",
+    "event_count": 20
+  },
+  {
+    "account_name": "Teach For Amer.",
+    "event_type": "email_open",
+    "event_date": "2026-06-29",
+    "event_count": 7
+  },
+  {
+    "account_name": "350.org",
+    "event_type": "webinar",
+    "event_date": "2026-06-24",
+    "event_count": 4
+  },
+  {
+    "account_name": "One Warm Coat",
+    "event_type": "page_visit",
+    "event_date": "2026-05-09",
+    "event_count": 13
+  },
+  {
+    "account_name": "Independent Sector",
+    "event_type": "page_visit",
+    "event_date": "2026-07-13",
+    "event_count": 19
+  },
+  {
+    "account_name": "Sierra Club",
+    "event_type": "page_visit",
+    "event_date": "2026-07-19",
+    "event_count": 13
+  },
+  {
+    "account_name": "Innocence Project",
+    "event_type": "content_download",
+    "event_date": "2026-05-22",
+    "event_count": 7
+  },
+  {
+    "account_name": "International Rescue Committee",
+    "event_type": "email_open",
+    "event_date": "2026-05-24",
+    "event_count": 37
+  },
+  {
+    "account_name": "Action Against Hunger",
+    "event_type": "email_open",
+    "event_date": "2026-07-26",
+    "event_count": 12
+  },
+  {
+    "account_name": "Khan Academy",
+    "event_type": "email_open",
+    "event_date": "2026-02-11",
+    "event_count": 43
+  },
+  {
+    "account_name": "American Cancer Society",
+    "event_type": "content_download",
+    "event_date": "2026-06-18",
+    "event_count": 9
+  },
+  {
+    "account_name": "Amnesty International, Incorporated",
+    "event_type": "email_open",
+    "event_date": "2026-05-14",
+    "event_count": 18
+  },
+  {
+    "account_name": "Acumen",
+    "event_type": "email_open",
+    "event_date": "2026-05-03",
+    "event_count": 27
+  },
+  {
+    "account_name": "SUSAN G. KOMEN",
+    "event_type": "content_download",
+    "event_date": "2026-05-12",
+    "event_count": 10
+  },
+  {
+    "account_name": "Natural Resources Defense Council",
+    "event_type": "email_open",
+    "event_date": "2026-06-26",
+    "event_count": 25
+  },
+  {
+    "account_name": "The Chicago Community Trust",
+    "event_type": "page_visit",
+    "event_date": "2026-07-28",
+    "event_count": 14
+  },
+  {
+    "account_name": "No Kid Hungry",
+    "event_type": "demo_request",
+    "event_date": "2026-06-26",
+    "event_count": 1
+  },
+  {
+    "account_name": "Ashoka",
+    "event_type": "page_visit",
+    "event_date": "2026-05-13",
+    "event_count": 17
+  },
+  {
+    "account_name": "Convoy of Hope",
+    "event_type": "content_download",
+    "event_date": "2026-06-12",
+    "event_count": 6
+  },
+  {
+    "account_name": "CHURCH WORLD SERVICE",
+    "event_type": "webinar",
+    "event_date": "2026-06-11",
+    "event_count": 3
+  },
+  {
+    "account_name": "Alley Cat Allies",
+    "event_type": "content_download",
+    "event_date": "2026-06-27",
+    "event_count": 9
+  },
+  {
+    "account_name": "Christian Aid",
+    "event_type": "page_visit",
+    "event_date": "2026-02-16",
+    "event_count": 18
+  },
+  {
+    "account_name": "Allen Inst.",
+    "event_type": "webinar",
+    "event_date": "2026-07-03",
+    "event_count": 4
+  },
+  {
+    "account_name": "Make-A-Wish America",
+    "event_type": "email_open",
+    "event_date": "2026-04-21",
+    "event_count": 32
+  },
+  {
+    "account_name": "Candid",
+    "event_type": "demo_request",
+    "event_date": "2026-05-19",
+    "event_count": 1
+  },
+  {
+    "account_name": "The Leukemia & Lymphoma Society",
+    "event_type": "page_visit",
+    "event_date": "2026-05-22",
+    "event_count": 10
+  },
+  {
+    "account_name": "Vera Institute of Justice",
+    "event_type": "email_open",
+    "event_date": "2026-01-18",
+    "event_count": 18
+  },
+  {
+    "account_name": "VolunteerMatch",
+    "event_type": "page_visit",
+    "event_date": "2026-07-16",
+    "event_count": 29
+  },
+  {
+    "account_name": "Amnesty International",
+    "event_type": "page_visit",
+    "event_date": "2026-06-28",
+    "event_count": 10
+  },
+  {
+    "account_name": "Polaris",
+    "event_type": "content_download",
+    "event_date": "2026-06-01",
+    "event_count": 5
+  },
+  {
+    "account_name": "Feeding America",
+    "event_type": "page_visit",
+    "event_date": "2026-06-15",
+    "event_count": 10
+  },
+  {
+    "account_name": "American Society for the Prevention of Cruelty to Animals",
+    "event_type": "content_download",
+    "event_date": "2026-07-18",
+    "event_count": 6
+  },
+  {
+    "account_name": "Local Initiatives Support Corporation",
+    "event_type": "webinar",
+    "event_date": "2026-06-29",
+    "event_count": 8
+  },
+  {
+    "account_name": "Parkinson's Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-06-18",
+    "event_count": 18
+  },
+  {
+    "account_name": "Girls Who Code",
+    "event_type": "email_open",
+    "event_date": "2026-07-06",
+    "event_count": 10
+  },
+  {
+    "account_name": "GLOBALGIVING",
+    "event_type": "page_visit",
+    "event_date": "2026-03-30",
+    "event_count": 9
+  },
+  {
+    "account_name": "Reading Is Fundamental",
+    "event_type": "email_open",
+    "event_date": "2026-06-17",
+    "event_count": 27
+  },
+  {
+    "account_name": "Cleveland Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 19
+  },
+  {
+    "account_name": "Dogs Trust",
+    "event_type": "page_visit",
+    "event_date": "2026-06-03",
+    "event_count": 11
+  },
+  {
+    "account_name": "Rocky Mountain Institute",
+    "event_type": "page_visit",
+    "event_date": "2026-05-26",
+    "event_count": 19
+  },
+  {
+    "account_name": "Accion Opportunity Fund",
+    "event_type": "demo_request",
+    "event_date": "2026-06-03",
+    "event_count": 1
+  },
+  {
+    "account_name": "The Museum of Modern Art",
+    "event_type": "webinar",
+    "event_date": "2026-05-20",
+    "event_count": 6
+  },
+  {
+    "account_name": "Boys & Girls Clubs of America",
+    "event_type": "page_visit",
+    "event_date": "2026-06-18",
+    "event_count": 32
+  },
+  {
+    "account_name": "RAND Corporation",
+    "event_type": "content_download",
+    "event_date": "2026-07-12",
+    "event_count": 6
+  },
+  {
+    "account_name": "Gary Sinise Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-07-17",
+    "event_count": 26
+  },
+  {
+    "account_name": "PATH",
+    "event_type": "content_download",
+    "event_date": "2026-06-17",
+    "event_count": 11
+  },
+  {
+    "account_name": "Seattle Foundation, Incorporated",
+    "event_type": "page_visit",
+    "event_date": "2026-06-09",
+    "event_count": 12
+  },
+  {
+    "account_name": "Code.org",
+    "event_type": "content_download",
+    "event_date": "2026-05-24",
+    "event_count": 9
+  },
+  {
+    "account_name": "DEPAUL USA",
+    "event_type": "webinar",
+    "event_date": "2026-07-28",
+    "event_count": 5
+  },
+  {
+    "account_name": "Meals on Wheels America",
+    "event_type": "email_open",
+    "event_date": "2026-01-01",
+    "event_count": 36
+  },
+  {
+    "account_name": "Southern Poverty Law Center",
+    "event_type": "email_open",
+    "event_date": "2026-04-05",
+    "event_count": 28
+  },
+  {
+    "account_name": "Clean Air Task Force",
+    "event_type": "page_visit",
+    "event_date": "2026-06-27",
+    "event_count": 11
+  },
+  {
+    "account_name": "CARE",
+    "event_type": "page_visit",
+    "event_date": "2026-05-19",
+    "event_count": 16
+  },
+  {
+    "account_name": "International Fund for Animal Welfare",
+    "event_type": "email_open",
+    "event_date": "2026-07-19",
+    "event_count": 16
+  },
+  {
+    "account_name": "OneGoal",
+    "event_type": "email_open",
+    "event_date": "2026-05-22",
+    "event_count": 24
+  },
+  {
+    "account_name": "Amnesty International",
+    "event_type": "email_open",
+    "event_date": "2026-07-02",
+    "event_count": 6
+  },
+  {
+    "account_name": "Big Brothers Big Sisters of America",
+    "event_type": "email_open",
+    "event_date": "2026-07-27",
+    "event_count": 50
+  },
+  {
+    "account_name": "The Trevor Project",
+    "event_type": "email_open",
+    "event_date": "2026-02-02",
+    "event_count": 31
+  },
+  {
+    "account_name": "PATH",
+    "event_type": "email_open",
+    "event_date": "2026-07-27",
+    "event_count": 24
+  },
+  {
+    "account_name": "Equal Justice Initiative",
+    "event_type": "demo_request",
+    "event_date": "2026-03-25",
+    "event_count": 2
+  },
+  {
+    "account_name": "ChildFund International",
+    "event_type": "webinar",
+    "event_date": "2026-03-13",
+    "event_count": 5
+  },
+  {
+    "account_name": "Results for America",
+    "event_type": "page_visit",
+    "event_date": "2026-07-18",
+    "event_count": 28
+  },
+  {
+    "account_name": "Citizen Schools",
+    "event_type": "webinar",
+    "event_date": "2026-05-25",
+    "event_count": 4
+  },
+  {
+    "account_name": "Zakat Foundation of America",
+    "event_type": "page_visit",
+    "event_date": "2026-07-25",
+    "event_count": 15
+  },
+  {
+    "account_name": "JA Worldwide",
+    "event_type": "email_open",
+    "event_date": "2026-07-15",
+    "event_count": 28
+  },
+  {
+    "account_name": "Rainforest Alliance",
+    "event_type": "page_visit",
+    "event_date": "2026-06-07",
+    "event_count": 6
+  },
+  {
+    "account_name": "Heifer International, Incorporated",
+    "event_type": "email_open",
+    "event_date": "2026-07-16",
+    "event_count": 16
+  },
+  {
+    "account_name": "Accion Opportunity Fund",
+    "event_type": "email_open",
+    "event_date": "2026-03-14",
+    "event_count": 12
+  },
+  {
+    "account_name": "READING IS FUNDAMENTAL",
+    "event_type": "email_open",
+    "event_date": "2026-06-15",
+    "event_count": 30
+  },
+  {
+    "account_name": "FREEDOM HOUSE",
+    "event_type": "email_open",
+    "event_date": "2026-05-09",
+    "event_count": 6
+  },
+  {
+    "account_name": "Adventist Development and Relief Agency",
+    "event_type": "page_visit",
+    "event_date": "2026-07-02",
+    "event_count": 24
+  },
+  {
+    "account_name": "ChildFund International",
+    "event_type": "email_open",
+    "event_date": "2026-05-06",
+    "event_count": 23
+  },
+  {
+    "account_name": "California Community Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-07-16",
+    "event_count": 45
+  },
+  {
+    "account_name": "Accion Opportunity Fund",
+    "event_type": "content_download",
+    "event_date": "2026-06-13",
+    "event_count": 4
+  },
+  {
+    "account_name": "National Alliance to End Homelessness",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 18
+  },
+  {
+    "account_name": "NPR",
+    "event_type": "email_open",
+    "event_date": "2026-05-27",
+    "event_count": 33
+  },
+  {
+    "account_name": "Mozilla Foundation",
+    "event_type": "content_download",
+    "event_date": "2026-06-28",
+    "event_count": 3
+  },
+  {
+    "account_name": "National Audubon Society",
+    "event_type": "webinar",
+    "event_date": "2026-05-28",
+    "event_count": 6
+  },
+  {
+    "account_name": "SEATTLE FOUNDATION",
+    "event_type": "page_visit",
+    "event_date": "2026-06-01",
+    "event_count": 34
+  },
+  {
+    "account_name": "Whitney Museum of American Art",
+    "event_type": "webinar",
+    "event_date": "2026-06-29",
+    "event_count": 1
+  },
+  {
+    "account_name": "Cold Spring Harbor Laboratory",
+    "event_type": "email_open",
+    "event_date": "2026-06-23",
+    "event_count": 33
+  },
+  {
+    "account_name": "American Friends Service Committee",
+    "event_type": "webinar",
+    "event_date": "2026-07-13",
+    "event_count": 6
+  },
+  {
+    "account_name": "The Arc",
+    "event_type": "page_visit",
+    "event_date": "2026-05-13",
+    "event_count": 23
+  },
+  {
+    "account_name": "Rotary International",
+    "event_type": "page_visit",
+    "event_date": "2026-06-21",
+    "event_count": 33
+  },
+  {
+    "account_name": "PEN AMERICA",
+    "event_type": "page_visit",
+    "event_date": "2026-07-25",
+    "event_count": 23
+  },
+  {
+    "account_name": "American Jewish World Service",
+    "event_type": "email_open",
+    "event_date": "2026-06-18",
+    "event_count": 32
+  },
+  {
+    "account_name": "Sierra Club",
+    "event_type": "page_visit",
+    "event_date": "2026-03-15",
+    "event_count": 12
+  },
+  {
+    "account_name": "The Leukemia & Lymphoma Society",
+    "event_type": "content_download",
+    "event_date": "2026-05-10",
+    "event_count": 12
+  },
+  {
+    "account_name": "Cleveland Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-05-17",
+    "event_count": 13
+  },
+  {
+    "account_name": "Code for America",
+    "event_type": "page_visit",
+    "event_date": "2026-07-16",
+    "event_count": 14
+  },
+  {
+    "account_name": "United Cerebral Palsy",
+    "event_type": "email_open",
+    "event_date": "2026-03-04",
+    "event_count": 37
+  },
+  {
+    "account_name": "American Diabetes Association",
+    "event_type": "page_visit",
+    "event_date": "2026-07-01",
+    "event_count": 15
+  },
+  {
+    "account_name": "AMERICANS FOR THE ARTS",
+    "event_type": "content_download",
+    "event_date": "2026-06-21",
+    "event_count": 10
+  },
+  {
+    "account_name": "Best Buddies International",
+    "event_type": "page_visit",
+    "event_date": "2026-04-29",
+    "event_count": 18
+  },
+  {
+    "account_name": "Greenpeace International",
+    "event_type": "page_visit",
+    "event_date": "2026-05-08",
+    "event_count": 16
+  },
+  {
+    "account_name": "Lincoln Center for the Performing Arts",
+    "event_type": "email_open",
+    "event_date": "2026-05-10",
+    "event_count": 16
+  },
+  {
+    "account_name": "Dress for Success WW",
+    "event_type": "email_open",
+    "event_date": "2026-06-23",
+    "event_count": 36
+  },
+  {
+    "account_name": "Mozilla Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-07-11",
+    "event_count": 10
+  },
+  {
+    "account_name": "CareerVillage.org",
+    "event_type": "page_visit",
+    "event_date": "2026-07-12",
+    "event_count": 18
+  },
+  {
+    "account_name": "CYSTIC FIBROSIS FOUNDATION",
+    "event_type": "content_download",
+    "event_date": "2026-07-05",
+    "event_count": 8
+  },
+  {
+    "account_name": "The Mission Continues",
+    "event_type": "demo_request",
+    "event_date": "2026-06-22",
+    "event_count": 2
+  },
+  {
+    "account_name": "Catholic Charities USA",
+    "event_type": "webinar",
+    "event_date": "2026-07-08",
+    "event_count": 5
+  },
+  {
+    "account_name": "Islamic Relief WW",
+    "event_type": "email_open",
+    "event_date": "2026-05-21",
+    "event_count": 34
+  },
+  {
+    "account_name": "World Central Kitchen",
+    "event_type": "page_visit",
+    "event_date": "2026-05-31",
+    "event_count": 22
+  },
+  {
+    "account_name": "DataKind",
+    "event_type": "demo_request",
+    "event_date": "2026-06-23",
+    "event_count": 2
+  },
+  {
+    "account_name": "Orbis International",
+    "event_type": "email_open",
+    "event_date": "2026-02-03",
+    "event_count": 24
+  },
+  {
+    "account_name": "FOUR PAWS International",
+    "event_type": "email_open",
+    "event_date": "2026-07-20",
+    "event_count": 10
+  },
+  {
+    "account_name": "Alley Cat Allies",
+    "event_type": "content_download",
+    "event_date": "2026-07-25",
+    "event_count": 9
+  },
+  {
+    "account_name": "The Boston Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-06-01",
+    "event_count": 31
+  },
+  {
+    "account_name": "Education Development Center",
+    "event_type": "webinar",
+    "event_date": "2026-07-20",
+    "event_count": 5
+  },
+  {
+    "account_name": "Adventist Development and Relief Agency",
+    "event_type": "page_visit",
+    "event_date": "2026-05-10",
+    "event_count": 26
+  },
+  {
+    "account_name": "American Society for the Prevention of Cruelty to Animals",
+    "event_type": "page_visit",
+    "event_date": "2026-01-14",
+    "event_count": 14
+  },
+  {
+    "account_name": "Poets & Writers",
+    "event_type": "page_visit",
+    "event_date": "2026-07-13",
+    "event_count": 9
+  },
+  {
+    "account_name": "Team Rubicon",
+    "event_type": "email_open",
+    "event_date": "2026-05-27",
+    "event_count": 15
+  },
+  {
+    "account_name": "Rebuilding Together",
+    "event_type": "webinar",
+    "event_date": "2026-05-14",
+    "event_count": 2
+  },
+  {
+    "account_name": "Friends of the Earth",
+    "event_type": "email_open",
+    "event_date": "2026-06-17",
+    "event_count": 13
+  },
+  {
+    "account_name": "Dogs Trust",
+    "event_type": "email_open",
+    "event_date": "2026-06-01",
+    "event_count": 6
+  },
+  {
+    "account_name": "Goodwill Industries Intl.",
+    "event_type": "webinar",
+    "event_date": "2026-05-10",
+    "event_count": 5
+  },
+  {
+    "account_name": "Orbis Intl.",
+    "event_type": "content_download",
+    "event_date": "2026-07-04",
+    "event_count": 11
+  },
+  {
+    "account_name": "OneGoal",
+    "event_type": "email_open",
+    "event_date": "2026-05-19",
+    "event_count": 29
+  },
+  {
+    "account_name": "Results for America",
+    "event_type": "email_open",
+    "event_date": "2026-07-10",
+    "event_count": 8
+  },
+  {
+    "account_name": "Community Solutions",
+    "event_type": "email_open",
+    "event_date": "2026-05-22",
+    "event_count": 20
+  },
+  {
+    "account_name": "WORLD RELIEF",
+    "event_type": "webinar",
+    "event_date": "2026-05-23",
+    "event_count": 4
+  },
+  {
+    "account_name": "United Way Worldwide",
+    "event_type": "page_visit",
+    "event_date": "2026-07-12",
+    "event_count": 13
+  },
+  {
+    "account_name": "Convoy of Hope",
+    "event_type": "email_open",
+    "event_date": "2026-05-20",
+    "event_count": 38
+  },
+  {
+    "account_name": "Feeding America",
+    "event_type": "email_open",
+    "event_date": "2026-06-06",
+    "event_count": 5
+  },
+  {
+    "account_name": "The Leukemia & Lymphoma Society",
+    "event_type": "email_open",
+    "event_date": "2026-07-07",
+    "event_count": 37
+  },
+  {
+    "account_name": "No Kid Hungry",
+    "event_type": "content_download",
+    "event_date": "2026-07-14",
+    "event_count": 4
+  },
+  {
+    "account_name": "Best Buddies International, Incorporated",
+    "event_type": "page_visit",
+    "event_date": "2026-07-02",
+    "event_count": 21
+  },
+  {
+    "account_name": "Creative Capital",
+    "event_type": "demo_request",
+    "event_date": "2026-02-09",
+    "event_count": 2
+  },
+  {
+    "account_name": "CMMB",
+    "event_type": "email_open",
+    "event_date": "2026-07-14",
+    "event_count": 24
+  },
+  {
+    "account_name": "ACUMEN",
+    "event_type": "page_visit",
+    "event_date": "2026-02-11",
+    "event_count": 7
+  },
+  {
+    "account_name": "Volunteers of America",
+    "event_type": "content_download",
+    "event_date": "2026-06-13",
+    "event_count": 11
+  },
+  {
+    "account_name": "Team Rubicon",
+    "event_type": "page_visit",
+    "event_date": "2026-07-28",
+    "event_count": 14
+  },
+  {
+    "account_name": "Room to Read",
+    "event_type": "email_open",
+    "event_date": "2026-05-14",
+    "event_count": 40
+  },
+  {
+    "account_name": "Shriners Children's",
+    "event_type": "content_download",
+    "event_date": "2026-06-19",
+    "event_count": 10
+  },
+  {
+    "account_name": "DataKind",
+    "event_type": "email_open",
+    "event_date": "2026-06-21",
+    "event_count": 13
+  },
+  {
+    "account_name": "International Refugee Assistance Project",
+    "event_type": "page_visit",
+    "event_date": "2026-07-20",
+    "event_count": 21
+  },
+  {
+    "account_name": "Cary Institute of Ecosystem Studies",
+    "event_type": "page_visit",
+    "event_date": "2026-05-19",
+    "event_count": 21
+  },
+  {
+    "account_name": "Girls Who Code",
+    "event_type": "content_download",
+    "event_date": "2026-07-06",
+    "event_count": 8
+  },
+  {
+    "account_name": "Helen Keller Intl",
+    "event_type": "demo_request",
+    "event_date": "2026-06-27",
+    "event_count": 1
+  },
+  {
+    "account_name": "Make-A-Wish America",
+    "event_type": "page_visit",
+    "event_date": "2026-07-28",
+    "event_count": 13
+  },
+  {
+    "account_name": "Big Brothers Big Sisters of America",
+    "event_type": "email_open",
+    "event_date": "2026-07-28",
+    "event_count": 38
+  },
+  {
+    "account_name": "RAND Corporation",
+    "event_type": "page_visit",
+    "event_date": "2026-01-02",
+    "event_count": 12
+  },
+  {
+    "account_name": "Results for America",
+    "event_type": "email_open",
+    "event_date": "2026-05-03",
+    "event_count": 9
+  },
+  {
+    "account_name": "Shriners Children's",
+    "event_type": "webinar",
+    "event_date": "2026-05-14",
+    "event_count": 2
+  },
+  {
+    "account_name": "Python Software Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-04-21",
+    "event_count": 34
+  },
+  {
+    "account_name": "Oxfam International",
+    "event_type": "content_download",
+    "event_date": "2026-07-05",
+    "event_count": 2
+  },
+  {
+    "account_name": "National Center for Missing & Exploited Children",
+    "event_type": "email_open",
+    "event_date": "2026-05-15",
+    "event_count": 20
+  },
+  {
+    "account_name": "BirdLife International",
+    "event_type": "email_open",
+    "event_date": "2026-07-01",
+    "event_count": 35
+  },
+  {
+    "account_name": "Pencils of Promise",
+    "event_type": "email_open",
+    "event_date": "2026-06-04",
+    "event_count": 16
+  },
+  {
+    "account_name": "Catholic Relief Services",
+    "event_type": "page_visit",
+    "event_date": "2026-07-09",
+    "event_count": 17
+  },
+  {
+    "account_name": "Convoy of Hope",
+    "event_type": "email_open",
+    "event_date": "2026-06-25",
+    "event_count": 5
+  },
+  {
+    "account_name": "Team Rubicon",
+    "event_type": "email_open",
+    "event_date": "2026-05-05",
+    "event_count": 32
+  },
+  {
+    "account_name": "charity: water",
+    "event_type": "content_download",
+    "event_date": "2026-01-07",
+    "event_count": 5
+  },
+  {
+    "account_name": "Brennan Center for Justice",
+    "event_type": "email_open",
+    "event_date": "2026-07-11",
+    "event_count": 35
+  },
+  {
+    "account_name": "Reading Is Fundamental",
+    "event_type": "email_open",
+    "event_date": "2026-06-19",
+    "event_count": 15
+  },
+  {
+    "account_name": "American Civil Liberties Union",
+    "event_type": "email_open",
+    "event_date": "2026-07-11",
+    "event_count": 18
+  },
+  {
+    "account_name": "Operation Smile",
+    "event_type": "email_open",
+    "event_date": "2026-06-22",
+    "event_count": 36
+  },
+  {
+    "account_name": "Family Promise",
+    "event_type": "content_download",
+    "event_date": "2026-07-18",
+    "event_count": 4
+  },
+  {
+    "account_name": "AMERICANS FOR THE ARTS",
+    "event_type": "page_visit",
+    "event_date": "2026-05-10",
+    "event_count": 27
+  },
+  {
+    "account_name": "THE POSSE FOUNDATION",
+    "event_type": "page_visit",
+    "event_date": "2026-05-12",
+    "event_count": 22
+  },
+  {
+    "account_name": "Islamic Relief Worldwide",
+    "event_type": "demo_request",
+    "event_date": "2026-05-28",
+    "event_count": 2
+  },
+  {
+    "account_name": "Apache Software Foundation",
+    "event_type": "webinar",
+    "event_date": "2026-07-20",
+    "event_count": 2
+  },
+  {
+    "account_name": "RTI International, Incorporated",
+    "event_type": "email_open",
+    "event_date": "2026-07-06",
+    "event_count": 23
+  },
+  {
+    "account_name": "The Chicago Community Trust",
+    "event_type": "email_open",
+    "event_date": "2026-07-01",
+    "event_count": 33
+  },
+  {
+    "account_name": "Smile Train",
+    "event_type": "page_visit",
+    "event_date": "2026-07-05",
+    "event_count": 11
+  },
+  {
+    "account_name": "Reading Is Fundamental",
+    "event_type": "email_open",
+    "event_date": "2026-06-01",
+    "event_count": 23
+  },
+  {
+    "account_name": "INTERNATIONAL RESCUE COMMITTEE",
+    "event_type": "email_open",
+    "event_date": "2026-07-06",
+    "event_count": 36
+  },
+  {
+    "account_name": "Human Rights Watch",
+    "event_type": "email_open",
+    "event_date": "2026-06-28",
+    "event_count": 5
+  },
+  {
+    "account_name": "Learning Ally",
+    "event_type": "page_visit",
+    "event_date": "2026-04-16",
+    "event_count": 29
+  },
+  {
+    "account_name": "American Foundation for Suicide Prevention",
+    "event_type": "content_download",
+    "event_date": "2026-05-29",
+    "event_count": 10
+  },
+  {
+    "account_name": "SOUTHERN POVERTY LAW CENTER",
+    "event_type": "page_visit",
+    "event_date": "2026-06-25",
+    "event_count": 16
+  },
+  {
+    "account_name": "People for the Ethical Treatment of Animals",
+    "event_type": "webinar",
+    "event_date": "2026-06-02",
+    "event_count": 1
+  },
+  {
+    "account_name": "Trócaire",
+    "event_type": "email_open",
+    "event_date": "2026-07-13",
+    "event_count": 43
+  },
+  {
+    "account_name": "World Relief",
+    "event_type": "email_open",
+    "event_date": "2026-07-06",
+    "event_count": 34
+  },
+  {
+    "account_name": "The Metropolitan Museum of Art",
+    "event_type": "email_open",
+    "event_date": "2026-06-18",
+    "event_count": 36
+  },
+  {
+    "account_name": "Dogs Trust",
+    "event_type": "email_open",
+    "event_date": "2026-06-04",
+    "event_count": 34
+  },
+  {
+    "account_name": "World Central Kitchen",
+    "event_type": "page_visit",
+    "event_date": "2026-04-30",
+    "event_count": 14
+  },
+  {
+    "account_name": "Digital Promise",
+    "event_type": "page_visit",
+    "event_date": "2026-05-30",
+    "event_count": 9
+  },
+  {
+    "account_name": "Solomon R. Guggenheim Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-05-26",
+    "event_count": 21
+  },
+  {
+    "account_name": "Teach For All, Incorporated",
+    "event_type": "webinar",
+    "event_date": "2026-06-22",
+    "event_count": 5
+  },
+  {
+    "account_name": "Coalition for the Homeless",
+    "event_type": "page_visit",
+    "event_date": "2026-05-12",
+    "event_count": 17
+  },
+  {
+    "account_name": "Compassion International",
+    "event_type": "email_open",
+    "event_date": "2026-05-19",
+    "event_count": 43
+  },
+  {
+    "account_name": "Goodwill Industries International",
+    "event_type": "page_visit",
+    "event_date": "2026-06-14",
+    "event_count": 11
+  },
+  {
+    "account_name": "RSPCA",
+    "event_type": "content_download",
+    "event_date": "2026-06-17",
+    "event_count": 4
+  },
+  {
+    "account_name": "American Alliance of Museums",
+    "event_type": "email_open",
+    "event_date": "2026-06-23",
+    "event_count": 17
+  },
+  {
+    "account_name": "Coalition for the Homeless",
+    "event_type": "email_open",
+    "event_date": "2026-05-10",
+    "event_count": 18
+  },
+  {
+    "account_name": "MAP International",
+    "event_type": "demo_request",
+    "event_date": "2026-01-04",
+    "event_count": 1
+  },
+  {
+    "account_name": "No Kid Hungry",
+    "event_type": "page_visit",
+    "event_date": "2026-07-14",
+    "event_count": 16
+  },
+  {
+    "account_name": "National Multiple Sclerosis Society",
+    "event_type": "page_visit",
+    "event_date": "2026-07-20",
+    "event_count": 31
+  },
+  {
+    "account_name": "HIAS",
+    "event_type": "email_open",
+    "event_date": "2026-06-29",
+    "event_count": 34
+  },
+  {
+    "account_name": "Operation Blessing, Incorporated",
+    "event_type": "email_open",
+    "event_date": "2026-06-14",
+    "event_count": 13
+  },
+  {
+    "account_name": "Habitat for Humanity International",
+    "event_type": "email_open",
+    "event_date": "2026-07-14",
+    "event_count": 40
+  },
+  {
+    "account_name": "Boys & Girls Clubs of America",
+    "event_type": "content_download",
+    "event_date": "2026-06-13",
+    "event_count": 5
+  },
+  {
+    "account_name": "People for the Ethical Treatment of Animals",
+    "event_type": "page_visit",
+    "event_date": "2026-02-16",
+    "event_count": 19
+  },
+  {
+    "account_name": "Gary Sinise Fdn.",
+    "event_type": "page_visit",
+    "event_date": "2026-05-12",
+    "event_count": 17
+  },
+  {
+    "account_name": "World Wildlife Fund",
+    "event_type": "webinar",
+    "event_date": "2026-07-24",
+    "event_count": 3
+  },
+  {
+    "account_name": "Pact",
+    "event_type": "content_download",
+    "event_date": "2026-07-14",
+    "event_count": 1
+  },
+  {
+    "account_name": "Heifer International",
+    "event_type": "webinar",
+    "event_date": "2026-06-28",
+    "event_count": 5
+  },
+  {
+    "account_name": "Learning Ally",
+    "event_type": "page_visit",
+    "event_date": "2026-05-17",
+    "event_count": 19
+  },
+  {
+    "account_name": "American Kidney Fund",
+    "event_type": "email_open",
+    "event_date": "2026-05-20",
+    "event_count": 21
+  },
+  {
+    "account_name": "Cold Spring Harbor Laboratory",
+    "event_type": "content_download",
+    "event_date": "2026-05-29",
+    "event_count": 7
+  },
+  {
+    "account_name": "National Community Reinvestment Coalition",
+    "event_type": "email_open",
+    "event_date": "2026-06-28",
+    "event_count": 8
+  },
+  {
+    "account_name": "Crisis Text Line",
+    "event_type": "webinar",
+    "event_date": "2026-06-22",
+    "event_count": 4
+  },
+  {
+    "account_name": "GlobalGiving",
+    "event_type": "page_visit",
+    "event_date": "2026-04-30",
+    "event_count": 25
+  },
+  {
+    "account_name": "Freedom House",
+    "event_type": "webinar",
+    "event_date": "2026-05-16",
+    "event_count": 3
+  },
+  {
+    "account_name": "FOUR PAWS Intl.",
+    "event_type": "page_visit",
+    "event_date": "2026-07-02",
+    "event_count": 18
+  },
+  {
+    "account_name": "826 National",
+    "event_type": "page_visit",
+    "event_date": "2026-01-24",
+    "event_count": 9
+  },
+  {
+    "account_name": "Candid",
+    "event_type": "email_open",
+    "event_date": "2026-05-24",
+    "event_count": 16
+  },
+  {
+    "account_name": "Free Software Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-05-19",
+    "event_count": 17
+  },
+  {
+    "account_name": "Feeding America",
+    "event_type": "content_download",
+    "event_date": "2026-07-18",
+    "event_count": 3
+  },
+  {
+    "account_name": "Creative Capital",
+    "event_type": "demo_request",
+    "event_date": "2026-06-24",
+    "event_count": 2
+  },
+  {
+    "account_name": "Jewish Federations of North America",
+    "event_type": "email_open",
+    "event_date": "2026-06-19",
+    "event_count": 5
+  },
+  {
+    "account_name": "NATIONAL TRUST FOR HISTORIC PRESERVATION",
+    "event_type": "page_visit",
+    "event_date": "2026-05-04",
+    "event_count": 9
+  },
+  {
+    "account_name": "Python Software Foundation",
+    "event_type": "content_download",
+    "event_date": "2026-05-23",
+    "event_count": 7
+  },
+  {
+    "account_name": "OPEN KNOWLEDGE FOUNDATION",
+    "event_type": "content_download",
+    "event_date": "2026-05-13",
+    "event_count": 11
+  },
+  {
+    "account_name": "Woods Hole Oceanographic Institution",
+    "event_type": "email_open",
+    "event_date": "2026-07-06",
+    "event_count": 7
+  },
+  {
+    "account_name": "826 National",
+    "event_type": "webinar",
+    "event_date": "2026-03-11",
+    "event_count": 5
+  },
+  {
+    "account_name": "Amnesty International",
+    "event_type": "email_open",
+    "event_date": "2026-05-21",
+    "event_count": 32
+  },
+  {
+    "account_name": "Plan International",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 30
+  },
+  {
+    "account_name": "Grameen Fdn.",
+    "event_type": "content_download",
+    "event_date": "2026-05-17",
+    "event_count": 3
+  },
+  {
+    "account_name": "Easterseals",
+    "event_type": "email_open",
+    "event_date": "2026-06-16",
+    "event_count": 26
+  },
+  {
+    "account_name": "Islamic Relief USA",
+    "event_type": "email_open",
+    "event_date": "2026-07-20",
+    "event_count": 32
+  },
+  {
+    "account_name": "Christian Aid",
+    "event_type": "page_visit",
+    "event_date": "2026-07-20",
+    "event_count": 21
+  },
+  {
+    "account_name": "HIAS",
+    "event_type": "demo_request",
+    "event_date": "2026-06-19",
+    "event_count": 2
+  },
+  {
+    "account_name": "International Refugee Assistance Project",
+    "event_type": "demo_request",
+    "event_date": "2026-06-20",
+    "event_count": 2
+  },
+  {
+    "account_name": "Plan International",
+    "event_type": "email_open",
+    "event_date": "2026-07-18",
+    "event_count": 11
+  },
+  {
+    "account_name": "Equal Justice Initiative",
+    "event_type": "page_visit",
+    "event_date": "2026-01-14",
+    "event_count": 18
+  },
+  {
+    "account_name": "Muslim Aid",
+    "event_type": "webinar",
+    "event_date": "2026-05-13",
+    "event_count": 4
+  },
+  {
+    "account_name": "Khan Academy",
+    "event_type": "email_open",
+    "event_date": "2026-07-09",
+    "event_count": 21
+  },
+  {
+    "account_name": "St. Jude Children's Research Hospital",
+    "event_type": "content_download",
+    "event_date": "2026-06-06",
+    "event_count": 2
+  },
+  {
+    "account_name": "OpenStreetMap Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-07-04",
+    "event_count": 14
+  },
+  {
+    "account_name": "Art Institute of Chicago",
+    "event_type": "email_open",
+    "event_date": "2026-05-01",
+    "event_count": 40
+  },
+  {
+    "account_name": "Adventist Development and Relief Agency",
+    "event_type": "email_open",
+    "event_date": "2026-06-20",
+    "event_count": 15
+  },
+  {
+    "account_name": "World Resources Institute",
+    "event_type": "content_download",
+    "event_date": "2026-06-24",
+    "event_count": 11
+  },
+  {
+    "account_name": "The Nature Conservancy",
+    "event_type": "content_download",
+    "event_date": "2026-05-20",
+    "event_count": 9
+  },
+  {
+    "account_name": "Free Software Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-06-14",
+    "event_count": 25
+  },
+  {
+    "account_name": "Save the Children",
+    "event_type": "webinar",
+    "event_date": "2026-07-21",
+    "event_count": 7
+  },
+  {
+    "account_name": "Solomon R. Guggenheim Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-05-03",
+    "event_count": 31
+  },
+  {
+    "account_name": "Rainforest Alliance",
+    "event_type": "email_open",
+    "event_date": "2026-05-30",
+    "event_count": 2
+  },
+  {
+    "account_name": "DataKind",
+    "event_type": "email_open",
+    "event_date": "2026-06-09",
+    "event_count": 13
+  },
+  {
+    "account_name": "Operation Smile",
+    "event_type": "email_open",
+    "event_date": "2026-06-13",
+    "event_count": 34
+  },
+  {
+    "account_name": "World Central Kitchen",
+    "event_type": "email_open",
+    "event_date": "2026-05-29",
+    "event_count": 19
+  },
+  {
+    "account_name": "OpenStreetMap Foundation",
+    "event_type": "content_download",
+    "event_date": "2026-06-15",
+    "event_count": 11
+  },
+  {
+    "account_name": "Fractured Atlas",
+    "event_type": "content_download",
+    "event_date": "2026-05-30",
+    "event_count": 4
+  },
+  {
+    "account_name": "New Teacher Center",
+    "event_type": "email_open",
+    "event_date": "2026-05-30",
+    "event_count": 6
+  },
+  {
+    "account_name": "Pratham Education Foundation, Incorporated",
+    "event_type": "page_visit",
+    "event_date": "2026-05-11",
+    "event_count": 25
+  },
+  {
+    "account_name": "Action Against Hunger",
+    "event_type": "page_visit",
+    "event_date": "2026-05-19",
+    "event_count": 15
+  },
+  {
+    "account_name": "Breakthrough Collaborative",
+    "event_type": "page_visit",
+    "event_date": "2026-06-23",
+    "event_count": 23
+  },
+  {
+    "account_name": "Electronic Frontier Fdn.",
+    "event_type": "content_download",
+    "event_date": "2026-05-09",
+    "event_count": 9
+  },
+  {
+    "account_name": "No Kid Hungry",
+    "event_type": "content_download",
+    "event_date": "2026-07-22",
+    "event_count": 1
+  },
+  {
+    "account_name": "NeighborWorks America",
+    "event_type": "page_visit",
+    "event_date": "2026-06-03",
+    "event_count": 14
+  },
+  {
+    "account_name": "Volunteers of America",
+    "event_type": "page_visit",
+    "event_date": "2026-05-08",
+    "event_count": 11
+  },
+  {
+    "account_name": "Worldreader",
+    "event_type": "email_open",
+    "event_date": "2026-05-11",
+    "event_count": 14
+  },
+  {
+    "account_name": "AMERICAN ALLIANCE OF MUSEUMS",
+    "event_type": "webinar",
+    "event_date": "2026-06-01",
+    "event_count": 5
+  },
+  {
+    "account_name": "Vera Institute of Justice",
+    "event_type": "page_visit",
+    "event_date": "2026-07-14",
+    "event_count": 16
+  },
+  {
+    "account_name": "Coalition for the Homeless",
+    "event_type": "content_download",
+    "event_date": "2026-05-03",
+    "event_count": 8
+  },
+  {
+    "account_name": "HUMANE WORLD FOR ANIMALS",
+    "event_type": "page_visit",
+    "event_date": "2026-07-18",
+    "event_count": 14
+  },
+  {
+    "account_name": "Vera Institute of Justice",
+    "event_type": "page_visit",
+    "event_date": "2026-06-05",
+    "event_count": 32
+  },
+  {
+    "account_name": "Lions Clubs International",
+    "event_type": "email_open",
+    "event_date": "2026-06-05",
+    "event_count": 23
+  },
+  {
+    "account_name": "OneGoal",
+    "event_type": "content_download",
+    "event_date": "2026-07-28",
+    "event_count": 7
+  },
+  {
+    "account_name": "J. Paul Getty Trust",
+    "event_type": "page_visit",
+    "event_date": "2026-01-29",
+    "event_count": 6
+  },
+  {
+    "account_name": "Action Against Hunger",
+    "event_type": "email_open",
+    "event_date": "2026-05-16",
+    "event_count": 11
+  },
+  {
+    "account_name": "RSPCA",
+    "event_type": "email_open",
+    "event_date": "2026-07-05",
+    "event_count": 24
+  },
+  {
+    "account_name": "Gary Sinise Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-01-01",
+    "event_count": 18
+  },
+  {
+    "account_name": "Reach Out and Read",
+    "event_type": "page_visit",
+    "event_date": "2026-07-05",
+    "event_count": 16
+  },
+  {
+    "account_name": "The Chicago Comm. Trust",
+    "event_type": "page_visit",
+    "event_date": "2026-06-14",
+    "event_count": 20
+  },
+  {
+    "account_name": "COALITION FOR THE HOMELESS",
+    "event_type": "email_open",
+    "event_date": "2026-04-30",
+    "event_count": 23
+  },
+  {
+    "account_name": "Zakat Foundation of America",
+    "event_type": "demo_request",
+    "event_date": "2026-05-21",
+    "event_count": 3
+  },
+  {
+    "account_name": "Action Against Hunger",
+    "event_type": "email_open",
+    "event_date": "2026-07-10",
+    "event_count": 36
+  },
+  {
+    "account_name": "JA Worldwide",
+    "event_type": "page_visit",
+    "event_date": "2026-07-02",
+    "event_count": 12
+  },
+  {
+    "account_name": "National Alliance on Mental Illness",
+    "event_type": "content_download",
+    "event_date": "2026-04-30",
+    "event_count": 9
+  },
+  {
+    "account_name": "United Way Worldwide",
+    "event_type": "email_open",
+    "event_date": "2026-06-17",
+    "event_count": 23
+  },
+  {
+    "account_name": "AMERICAN CIVIL LIBERTIES UNION",
+    "event_type": "page_visit",
+    "event_date": "2026-05-15",
+    "event_count": 5
+  },
+  {
+    "account_name": "Year Up United",
+    "event_type": "content_download",
+    "event_date": "2026-05-01",
+    "event_count": 6
+  },
+  {
+    "account_name": "National Audubon Society",
+    "event_type": "email_open",
+    "event_date": "2026-06-08",
+    "event_count": 6
+  },
+  {
+    "account_name": "NetHope",
+    "event_type": "page_visit",
+    "event_date": "2026-06-21",
+    "event_count": 6
+  },
+  {
+    "account_name": "Ronald McDonald House Charities",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 22
+  },
+  {
+    "account_name": "Mental Health America",
+    "event_type": "page_visit",
+    "event_date": "2026-05-02",
+    "event_count": 28
+  },
+  {
+    "account_name": "International Crisis Group",
+    "event_type": "email_open",
+    "event_date": "2026-07-02",
+    "event_count": 24
+  },
+  {
+    "account_name": "Plan International",
+    "event_type": "email_open",
+    "event_date": "2026-06-18",
+    "event_count": 25
+  },
+  {
+    "account_name": "JA Worldwide",
+    "event_type": "email_open",
+    "event_date": "2026-05-28",
+    "event_count": 39
+  },
+  {
+    "account_name": "The Metropolitan Museum of Art",
+    "event_type": "demo_request",
+    "event_date": "2026-06-22",
+    "event_count": 3
+  },
+  {
+    "account_name": "National Alliance on Mental Illness",
+    "event_type": "email_open",
+    "event_date": "2026-06-13",
+    "event_count": 10
+  },
+  {
+    "account_name": "Cleveland Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-06-01",
+    "event_count": 30
+  },
+  {
+    "account_name": "March of Dimes",
+    "event_type": "page_visit",
+    "event_date": "2026-05-21",
+    "event_count": 10
+  },
+  {
+    "account_name": "Food Bank For New York City",
+    "event_type": "webinar",
+    "event_date": "2026-05-11",
+    "event_count": 4
+  },
+  {
+    "account_name": "Catholic Charities USA",
+    "event_type": "email_open",
+    "event_date": "2026-05-10",
+    "event_count": 22
+  },
+  {
+    "account_name": "Save the Children",
+    "event_type": "page_visit",
+    "event_date": "2026-05-17",
+    "event_count": 11
+  },
+  {
+    "account_name": "Breakthrough Collaborative",
+    "event_type": "email_open",
+    "event_date": "2026-06-22",
+    "event_count": 42
+  },
+  {
+    "account_name": "Volunteers of America",
+    "event_type": "content_download",
+    "event_date": "2026-05-10",
+    "event_count": 10
+  },
+  {
+    "account_name": "The Trevor Project",
+    "event_type": "email_open",
+    "event_date": "2026-02-06",
+    "event_count": 19
+  },
+  {
+    "account_name": "Lutheran World Relief",
+    "event_type": "page_visit",
+    "event_date": "2026-07-10",
+    "event_count": 14
+  },
+  {
+    "account_name": "Cleveland Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-06-27",
+    "event_count": 15
+  },
+  {
+    "account_name": "Fractured Atlas",
+    "event_type": "email_open",
+    "event_date": "2026-07-24",
+    "event_count": 37
+  },
+  {
+    "account_name": "Sierra Club",
+    "event_type": "demo_request",
+    "event_date": "2026-01-12",
+    "event_count": 3
+  },
+  {
+    "account_name": "Aga Khan Foundation USA",
+    "event_type": "content_download",
+    "event_date": "2026-07-26",
+    "event_count": 4
+  },
+  {
+    "account_name": "Make-A-Wish International",
+    "event_type": "email_open",
+    "event_date": "2026-06-27",
+    "event_count": 2
+  },
+  {
+    "account_name": "GlobalGiving",
+    "event_type": "page_visit",
+    "event_date": "2026-05-24",
+    "event_count": 19
+  },
+  {
+    "account_name": "Sierra Club",
+    "event_type": "page_visit",
+    "event_date": "2026-07-17",
+    "event_count": 11
+  },
+  {
+    "account_name": "Water.org",
+    "event_type": "email_open",
+    "event_date": "2026-04-30",
+    "event_count": 12
+  },
+  {
+    "account_name": "Digital Promise",
+    "event_type": "content_download",
+    "event_date": "2026-04-12",
+    "event_count": 12
+  },
+  {
+    "account_name": "TRÓCAIRE",
+    "event_type": "content_download",
+    "event_date": "2026-06-19",
+    "event_count": 12
+  },
+  {
+    "account_name": "Pew Research Center",
+    "event_type": "content_download",
+    "event_date": "2026-06-15",
+    "event_count": 11
+  },
+  {
+    "account_name": "American Jewish World Service",
+    "event_type": "email_open",
+    "event_date": "2026-07-19",
+    "event_count": 6
+  },
+  {
+    "account_name": "Oxfam International",
+    "event_type": "page_visit",
+    "event_date": "2026-06-22",
+    "event_count": 8
+  },
+  {
+    "account_name": "EDUCATION DEVELOPMENT CENTER",
+    "event_type": "page_visit",
+    "event_date": "2026-06-08",
+    "event_count": 8
+  },
+  {
+    "account_name": "THE BOSTON FOUNDATION",
+    "event_type": "page_visit",
+    "event_date": "2026-06-22",
+    "event_count": 24
+  },
+  {
+    "account_name": "Search for Common Ground",
+    "event_type": "page_visit",
+    "event_date": "2026-05-18",
+    "event_count": 31
+  },
+  {
+    "account_name": "American Humane",
+    "event_type": "email_open",
+    "event_date": "2026-05-07",
+    "event_count": 9
+  },
+  {
+    "account_name": "Barefoot College International",
+    "event_type": "content_download",
+    "event_date": "2026-06-07",
+    "event_count": 4
+  },
+  {
+    "account_name": "Grameen Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-05-01",
+    "event_count": 9
+  },
+  {
+    "account_name": "Lutheran World Relief",
+    "event_type": "content_download",
+    "event_date": "2026-07-05",
+    "event_count": 10
+  },
+  {
+    "account_name": "Friends of the Earth",
+    "event_type": "page_visit",
+    "event_date": "2026-07-05",
+    "event_count": 6
+  },
+  {
+    "account_name": "ENTERPRISE COMMUNITY PARTNERS",
+    "event_type": "demo_request",
+    "event_date": "2026-07-18",
+    "event_count": 1
+  },
+  {
+    "account_name": "American Kidney Fund",
+    "event_type": "email_open",
+    "event_date": "2026-06-12",
+    "event_count": 26
+  },
+  {
+    "account_name": "EPISCOPAL RELIEF & DEVELOPMENT",
+    "event_type": "webinar",
+    "event_date": "2026-06-03",
+    "event_count": 3
+  },
+  {
+    "account_name": "Mercy Corps",
+    "event_type": "demo_request",
+    "event_date": "2026-05-28",
+    "event_count": 2
+  },
+  {
+    "account_name": "National Multiple Sclerosis Society",
+    "event_type": "email_open",
+    "event_date": "2026-05-25",
+    "event_count": 13
+  },
+  {
+    "account_name": "Médecins du Monde",
+    "event_type": "email_open",
+    "event_date": "2026-05-31",
+    "event_count": 16
+  },
+  {
+    "account_name": "American Diabetes Association",
+    "event_type": "page_visit",
+    "event_date": "2026-04-29",
+    "event_count": 24
+  },
+  {
+    "account_name": "World Resources Institute",
+    "event_type": "email_open",
+    "event_date": "2026-07-26",
+    "event_count": 40
+  },
+  {
+    "account_name": "JA Worldwide",
+    "event_type": "email_open",
+    "event_date": "2026-05-06",
+    "event_count": 27
+  },
+  {
+    "account_name": "RSPCA",
+    "event_type": "page_visit",
+    "event_date": "2026-07-07",
+    "event_count": 23
+  },
+  {
+    "account_name": "Surfrider Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-04-29",
+    "event_count": 8
+  },
+  {
+    "account_name": "Sundance Inst.",
+    "event_type": "page_visit",
+    "event_date": "2026-06-22",
+    "event_count": 33
+  },
+  {
+    "account_name": "Smile Train",
+    "event_type": "email_open",
+    "event_date": "2026-07-19",
+    "event_count": 28
+  },
+  {
+    "account_name": "Film Independent",
+    "event_type": "webinar",
+    "event_date": "2026-06-24",
+    "event_count": 2
+  },
+  {
+    "account_name": "CareerVillage.org",
+    "event_type": "page_visit",
+    "event_date": "2026-07-21",
+    "event_count": 9
+  },
+  {
+    "account_name": "FOUR PAWS International",
+    "event_type": "email_open",
+    "event_date": "2026-05-20",
+    "event_count": 10
+  },
+  {
+    "account_name": "Education Development Center",
+    "event_type": "email_open",
+    "event_date": "2026-04-20",
+    "event_count": 13
+  },
+  {
+    "account_name": "Oceana",
+    "event_type": "page_visit",
+    "event_date": "2026-07-26",
+    "event_count": 12
+  },
+  {
+    "account_name": "Partners In Health",
+    "event_type": "webinar",
+    "event_date": "2026-04-30",
+    "event_count": 3
+  },
+  {
+    "account_name": "International Crisis Group",
+    "event_type": "content_download",
+    "event_date": "2026-06-02",
+    "event_count": 11
+  },
+  {
+    "account_name": "Adventist Dev. and Relief Agency",
+    "event_type": "email_open",
+    "event_date": "2026-06-21",
+    "event_count": 18
+  },
+  {
+    "account_name": "Planned Parenthood Federation of America",
+    "event_type": "page_visit",
+    "event_date": "2026-07-04",
+    "event_count": 10
+  },
+  {
+    "account_name": "Electronic Frontier Fdn.",
+    "event_type": "page_visit",
+    "event_date": "2026-07-11",
+    "event_count": 6
+  },
+  {
+    "account_name": "PENCILS OF PROMISE",
+    "event_type": "email_open",
+    "event_date": "2026-07-03",
+    "event_count": 15
+  },
+  {
+    "account_name": "New Teacher Center",
+    "event_type": "webinar",
+    "event_date": "2026-06-25",
+    "event_count": 3
+  },
+  {
+    "account_name": "Learning Ally",
+    "event_type": "email_open",
+    "event_date": "2026-07-12",
+    "event_count": 21
+  },
+  {
+    "account_name": "American Red Cross",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 38
+  },
+  {
+    "account_name": "Earthjustice",
+    "event_type": "page_visit",
+    "event_date": "2026-06-08",
+    "event_count": 6
+  },
+  {
+    "account_name": "African Wildlife Foundation",
+    "event_type": "email_open",
+    "event_date": "2026-07-10",
+    "event_count": 16
+  },
+  {
+    "account_name": "Education Dev. Center",
+    "event_type": "content_download",
+    "event_date": "2026-06-17",
+    "event_count": 3
+  },
+  {
+    "account_name": "Parkinson's Foundation",
+    "event_type": "page_visit",
+    "event_date": "2026-07-27",
+    "event_count": 11
+  },
+  {
+    "account_name": "The Salvation Army USA",
+    "event_type": "page_visit",
+    "event_date": "2026-06-16",
+    "event_count": 29
+  },
+  {
+    "account_name": "Alzheimer's Association",
+    "event_type": "content_download",
+    "event_date": "2026-06-04",
+    "event_count": 12
+  },
+  {
+    "account_name": "Caritas Internationalis",
+    "event_type": "email_open",
+    "event_date": "2026-06-20",
+    "event_count": 4
+  },
+  {
+    "account_name": "charity: water",
+    "event_type": "page_visit",
+    "event_date": "2026-02-06",
+    "event_count": 27
+  },
+  {
+    "account_name": "Church World Service",
+    "event_type": "page_visit",
+    "event_date": "2026-03-31",
+    "event_count": 7
+  },
+  {
+    "account_name": "SMILE TRAIN",
+    "event_type": "email_open",
+    "event_date": "2026-06-29",
+    "event_count": 43
+  },
+  {
+    "account_name": "American Cancer Society",
+    "event_type": "webinar",
+    "event_date": "2026-05-17",
+    "event_count": 4
+  },
+  {
+    "account_name": "CareerVillage.org",
+    "event_type": "email_open",
+    "event_date": "2026-07-08",
+    "event_count": 9
+  },
+  {
+    "account_name": "RAND Corporation",
+    "event_type": "webinar",
+    "event_date": "2026-02-22",
+    "event_count": 4
+  },
+  {
+    "account_name": "BRAC",
+    "event_type": "email_open",
+    "event_date": "2026-06-11",
+    "event_count": 18
+  },
+  {
+    "account_name": "March of Dimes",
+    "event_type": "webinar",
+    "event_date": "2026-03-01",
+    "event_count": 3
+  }
+]

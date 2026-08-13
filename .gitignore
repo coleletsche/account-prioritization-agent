@@ -1,0 +1,23 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next
+/out
+
+# testing and coverage
+/coverage
+/playwright-report
+/test-results
+
+# local environment and credentials
+.env*
+!.env.example
+
+# logs and operating system files
+*.log
+.DS_Store
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
