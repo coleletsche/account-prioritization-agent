@@ -98,3 +98,30 @@ export interface ParsedEngagements {
   records: EngagementSignal[];
   issues: DataQualityIssue[];
 }
+
+export interface ScoreWeights {
+  intent: number;
+  value: number;
+  timing: number;
+}
+
+export interface FactorScores {
+  intent: number;
+  value: number;
+  timing: number;
+}
+
+export type DominantFactor = keyof FactorScores;
+
+export interface RankedAccount {
+  organization: ResolvedOrganization;
+  rank: number;
+  ownerRank: number;
+  score: number;
+  factors: FactorScores;
+  rawIntent: number;
+  dominantFactor: DominantFactor;
+  reason: string;
+  asOfDate: string;
+  weights: ScoreWeights;
+}

@@ -1,0 +1,54 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`deterministic priority scoring > reproduces the default Top 10 for each SDR 1`] = `
+{
+  "Rep A": [
+    "American Friends Service Committee",
+    "Trócaire",
+    "Save the Children",
+    "American Society for the Prevention of Cruelty to Animals",
+    "OneGoal",
+    "HIAS",
+    "World Wildlife Fund",
+    "Pew Research Center",
+    "OpenStreetMap Foundation",
+    "Vera Institute of Justice",
+  ],
+  "Rep B": [
+    "PATH",
+    "Education Development Center",
+    "RSPCA",
+    "CareerVillage.org",
+    "Results for America",
+    "JA Worldwide",
+    "Big Brothers Big Sisters of America",
+    "Depaul USA",
+    "Cold Spring Harbor Laboratory",
+    "Cystic Fibrosis Foundation",
+  ],
+  "Rep C": [
+    "No Kid Hungry",
+    "Alley Cat Allies",
+    "Feeding America",
+    "Zakat Foundation of America",
+    "VolunteerMatch",
+    "Aga Khan Foundation USA",
+    "RAND Corporation",
+    "PEN America",
+    "Adventist Development and Relief Agency",
+    "The Chicago Community Trust",
+  ],
+  "Rep D": [
+    "Volunteers of America",
+    "Team Rubicon",
+    "Girls Who Code",
+    "International Refugee Assistance Project",
+    "Christian Aid",
+    "Lutheran World Relief",
+    "Heifer International",
+    "Orbis International",
+    "St. Jude Children's Research Hospital",
+    "World Resources Institute",
+  ],
+}
+`;
