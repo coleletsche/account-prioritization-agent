@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, FileJson2, FileSpreadsheet, ShieldCheck, Upload, X } from "lucide-react";
 import { DataImportError, processCrmExports, type EntityResolutionResult } from "@/lib/data";
+import { useEscape } from "./use-escape";
 
 export function UploadDialog({ open, onClose, onApply }: { open: boolean; onClose: () => void; onApply: (data: EntityResolutionResult, label: string) => void }) {
   const [accountsFile, setAccountsFile] = useState<File>();
@@ -10,6 +11,7 @@ export function UploadDialog({ open, onClose, onApply }: { open: boolean; onClos
   const [preview, setPreview] = useState<EntityResolutionResult>();
   const [error, setError] = useState<string>();
   const [validating, setValidating] = useState(false);
+  useEscape(open, onClose);
 
   if (!open) return null;
 

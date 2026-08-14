@@ -12,6 +12,7 @@ import { BriefingPanel } from "./briefing-panel";
 import { RankingTable } from "./ranking-table";
 import { ReviewQueue } from "./review-queue";
 import { UploadDialog } from "./upload-dialog";
+import { useEscape } from "./use-escape";
 import { WeightControls } from "./weight-controls";
 
 const DEFAULT_WEEK = "2026-08-17";
@@ -38,6 +39,7 @@ export function AccountDashboard() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [datasetLabel, setDatasetLabel] = useState("Bundled assessment data");
+  useEscape(methodologyOpen, () => setMethodologyOpen(false));
 
   useEffect(() => {
     let current = true;

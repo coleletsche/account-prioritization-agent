@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Filter, X } from "lucide-react";
 import type { DataQualityIssue, IssueCategory } from "@/lib/data";
+import { useEscape } from "./use-escape";
 
 const CATEGORY_LABELS: Record<IssueCategory, string> = {
   schema: "Import schema", identity: "Organization identity", owner: "Ownership", website: "Website", arr: "ARR", contact_date: "Contact timing", industry: "Industry", tier: "Account tier", engagement: "Engagement",
@@ -12,6 +13,7 @@ export function ReviewQueue({ open, issues, onClose }: { open: boolean; issues: 
   const [category, setCategory] = useState<"all" | IssueCategory>("all");
   const categories = useMemo(() => [...new Set(issues.map((issue) => issue.category))].sort(), [issues]);
   const visible = category === "all" ? issues : issues.filter((issue) => issue.category === category);
+  useEscape(open, onClose);
   if (!open) return null;
 
   return (

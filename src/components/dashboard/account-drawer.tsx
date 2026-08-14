@@ -3,6 +3,7 @@
 import { AlertTriangle, Calendar, ExternalLink, Signal, X } from "lucide-react";
 import type { RankedAccount } from "@/lib/data";
 import { daysBetween } from "@/lib/scoring";
+import { useEscape } from "./use-escape";
 
 const FACTOR_LABELS = { intent: "Intent", value: "Account value", timing: "Contact timing" } as const;
 const EVENT_LABELS: Record<string, string> = {
@@ -14,6 +15,7 @@ function formatCurrency(value?: number) {
 }
 
 export function AccountDrawer({ account, onClose }: { account?: RankedAccount; onClose: () => void }) {
+  useEscape(Boolean(account), onClose);
   if (!account) return null;
   const { organization } = account;
   const futureContact = organization.lastContactDate ? daysBetween(organization.lastContactDate, account.asOfDate) < 0 : false;

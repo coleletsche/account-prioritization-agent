@@ -867,6 +867,8 @@ select:focus-visible {
   border-radius: 16px;
   background: #fffdfd;
   padding: 17px;
+  content-visibility: auto;
+  contain-intrinsic-size: 150px;
 }
 
 @media (max-width: 1279px) {
