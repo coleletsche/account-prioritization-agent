@@ -6,7 +6,7 @@ import type { DataQualityIssue, IssueCategory } from "@/lib/data";
 import { useEscape } from "./use-escape";
 
 const CATEGORY_LABELS: Record<IssueCategory, string> = {
-  schema: "Import schema", identity: "Organization identity", owner: "Ownership", website: "Website", arr: "ARR", contact_date: "Contact timing", industry: "Industry", tier: "Account tier", engagement: "Engagement",
+  schema: "Import schema", identity: "Organization identity", owner: "Ownership", website: "Website", arr: "ARR", contact_date: "Contact timing", industry: "Industry", tier: "Account tier", engagement: "Engagement", suppression: "Contact suppression",
 };
 
 export function ReviewQueue({ open, issues, onClose }: { open: boolean; issues: DataQualityIssue[]; onClose: () => void }) {

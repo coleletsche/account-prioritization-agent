@@ -6,8 +6,14 @@ import { BriefingPanel } from "./briefing-panel";
 const account: RankedAccount = {
   rank: 1,
   ownerRank: 1,
+  accountScore: 73.3,
+  intentScore: 100,
+  priorityScore: 91.2,
+  priorityBand: "P0",
   score: 91.2,
   factors: { intent: 100, value: 80, timing: 60 },
+  accountFeatures: { tierScore: 85, arrScore: 100, accountValueScore: 90.25, contactStalenessDays: 16, contactTimingScore: 17.8 },
+  intentFeatures: { rawScore: 12, signalBreadth: 1, totalFrequency: 2, latestSignalDate: "2026-08-10" },
   rawIntent: 12,
   dominantFactor: "intent",
   reason: "Demo request activity is the strongest priority signal.",
@@ -15,6 +21,7 @@ const account: RankedAccount = {
   weights: { intent: 55, value: 30, timing: 15 },
   organization: {
     id: "org-acme",
+    accountIds: [],
     canonicalName: "Acme Foundation",
     aliases: ["Acme Foundation"],
     sourceRows: [2],
@@ -28,12 +35,13 @@ const account: RankedAccount = {
     owner: "Rep A",
     engagements: [{ rowNumber: 1, accountName: "Acme Foundation", eventType: "demo_request", eventDate: "2026-08-10", eventCount: 2 }],
     confidence: "high",
+    validationStatus: "valid",
     issues: [],
     eligible: true,
   },
 };
 
-const statistics: ResolutionStatistics = { sourceAccountRows: 1, sourceSignalRows: 1, resolvedOrganizations: 1, duplicateDomainGroups: 0, matchedSignals: 1, unmatchedSignals: 0, excludedOrganizations: 0 };
+const statistics: ResolutionStatistics = { sourceAccountRows: 1, sourceSignalRows: 1, resolvedOrganizations: 1, duplicateDomainGroups: 0, matchedSignals: 1, unmatchedSignals: 0, blockedSignals: 0, excludedOrganizations: 0, validOrganizations: 1, warningOrganizations: 0, blockedOrganizations: 0 };
 
 afterEach(() => vi.unstubAllGlobals());
 

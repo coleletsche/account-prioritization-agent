@@ -51,9 +51,9 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
                 <div key={factor}>
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span className="font-bold text-ink">{FACTOR_LABELS[factor]} <span className="font-medium text-muted">· {account.weights[factor]}% weight</span></span>
-                    <strong className="tabular-nums text-ink">{account.factors[factor].toFixed(1)}</strong>
+                    <strong className="tabular-nums text-ink">{account.factors[factor]?.toFixed(1) ?? "Unknown"}</strong>
                   </div>
-                  <div className="factor-track"><div className={`factor-fill factor-${factor}`} style={{ width: `${account.factors[factor]}%` }} /></div>
+                  <div className="factor-track"><div className={`factor-fill factor-${factor}`} style={{ width: `${account.factors[factor] ?? 0}%` }} /></div>
                 </div>
               ))}
             </div>
@@ -71,7 +71,7 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
                 <div key={label} className="bg-white p-4"><dt className="text-xs font-bold uppercase tracking-[0.08em] text-muted">{label}</dt><dd className="mt-2 text-sm font-extrabold text-ink">{value}</dd></div>
               ))}
             </dl>
-            {futureContact && <p className="warning-note mt-3"><AlertTriangle size={15} /> Future-dated contact is treated as neutral timing.</p>}
+            {futureContact && <p className="warning-note mt-3"><AlertTriangle size={15} /> Future-dated contact is unknown and omitted from scoring.</p>}
           </section>
 
           <section aria-labelledby="engagement-heading">
