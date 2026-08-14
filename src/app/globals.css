@@ -108,6 +108,13 @@ select:focus-visible {
   transform: translateY(-1px);
 }
 
+.button-primary:disabled,
+.button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .brand-panel {
   min-height: 220px;
   border-radius: 24px;
@@ -138,6 +145,37 @@ select:focus-visible {
 
 .button-ghost:hover {
   background: #fff5f8;
+}
+
+.button-compact {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  background: #fffdfd;
+  padding: 0 12px;
+  color: #343333;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.button-compact:hover {
+  border-color: rgba(229, 90, 127, 0.35);
+  background: #fff5f8;
+}
+
+.button-compact-primary {
+  border-color: #e55a7f;
+  background: #e55a7f;
+  color: white;
+}
+
+.button-compact-primary:hover {
+  border-color: #d9416c;
+  background: #d9416c;
 }
 
 .date-control {
@@ -193,6 +231,17 @@ select:focus-visible {
 .overview-card.overview-warning {
   border-color: #efc273;
   background: #fffdfa;
+}
+
+.overview-card-button {
+  width: 100%;
+  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.overview-card-button:hover {
+  border-color: rgba(229, 90, 127, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(33, 31, 84, 0.09);
 }
 
 .metric-icon {
@@ -516,7 +565,7 @@ select:focus-visible {
 
 .factor-track {
   height: 8px;
-  overflow: hidden;
+  overflow-y: auto;
   border-radius: 999px;
   background: #f0eff3;
 }
@@ -597,6 +646,147 @@ select:focus-visible {
   color: #606060;
   font-size: 0.75rem;
   line-height: 1.65;
+}
+
+.modal-panel {
+  position: relative;
+  width: min(100%, 760px);
+  max-height: min(92vh, 880px);
+  overflow: hidden;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 28px 90px rgba(14, 13, 13, 0.24);
+}
+
+.file-drop {
+  position: relative;
+  display: flex;
+  min-height: 152px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px dashed rgba(229, 90, 127, 0.45);
+  border-radius: 18px;
+  background: #fffafb;
+  padding: 20px;
+  color: #d9416c;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-drop:hover {
+  border-color: #e55a7f;
+  background: #fff5f8;
+}
+
+.file-drop strong {
+  color: #0e0d0d;
+  font-size: 0.875rem;
+}
+
+.file-drop span {
+  max-width: 100%;
+  overflow: hidden;
+  color: #606060;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-radius: 12px;
+  background: #f3f2f8;
+  padding: 12px 14px;
+  color: #4f4d70;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.privacy-note svg {
+  flex: 0 0 auto;
+}
+
+.upload-error {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid rgba(226, 69, 69, 0.3);
+  border-radius: 14px;
+  background: #fff1f1;
+  padding: 13px 15px;
+  color: #8f1f1f;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.upload-preview {
+  border: 1px solid rgba(47, 152, 97, 0.26);
+  border-radius: 18px;
+  background: #f6fff9;
+  padding: 18px;
+}
+
+.preview-stat {
+  border-radius: 12px;
+  background: white;
+  padding: 12px;
+}
+
+.preview-stat dt {
+  color: #606060;
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.preview-stat dd {
+  margin-top: 4px;
+  color: #0e0d0d;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.quality-count {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 0.625rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quality-high {
+  background: #ffe5ec;
+  color: #a9264e;
+}
+
+.quality-medium {
+  background: #fff1ce;
+  color: #734b07;
+}
+
+.quality-low {
+  background: #eeedf4;
+  color: #4f4d70;
+}
+
+.review-item {
+  border: 1px solid #ededed;
+  border-radius: 16px;
+  background: #fffdfd;
+  padding: 17px;
 }
 
 @media (max-width: 1279px) {

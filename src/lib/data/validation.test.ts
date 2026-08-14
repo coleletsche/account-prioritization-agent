@@ -51,4 +51,18 @@ describe("CRM validation and entity resolution", () => {
     expect(parsed.records).toHaveLength(0);
     expect(parsed.issues).toHaveLength(2);
   });
+
+  it("routes ambiguous aliases to review instead of fuzzy-attaching a signal", () => {
+    const accounts = [
+      "account_name,industry,arr,last_contact_date,account_tier,website,region,owner",
+      "Acme Inc,Technology,1000,2026-08-01,Enterprise,https://acme-one.example,North America,Rep A",
+      "Acme,Technology,2000,2026-08-01,Enterprise,https://acme-two.example,North America,Rep B",
+    ].join("\n");
+    const result = processCrmExports(accounts, JSON.stringify([
+      { account_name: "Acme", event_type: "demo_request", event_date: "2026-08-10", event_count: 1 },
+    ]));
+
+    expect(result.statistics).toMatchObject({ resolvedOrganizations: 2, matchedSignals: 0, unmatchedSignals: 1 });
+    expect(result.reviewQueue).toContainEqual(expect.objectContaining({ category: "identity", message: "Engagement account matched more than one organization." }));
+  });
 });

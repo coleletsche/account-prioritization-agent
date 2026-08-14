@@ -20,7 +20,7 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
 
   return (
     <div className="fixed inset-0 z-50" role="presentation">
-      <button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[2px]" onClick={onClose} aria-label="Close account details" />
+      <button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[2px]" onClick={onClose} aria-label="Dismiss account details" />
       <aside className="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="account-title">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-6 py-5 backdrop-blur sm:px-8">
           <div>
