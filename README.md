@@ -2,6 +2,8 @@
 
 A desktop-first Next.js application that turns CRM account and engagement exports into a transparent Monday call plan. It gives Sales leadership a global Top 25, each SDR up to ten accounts, factor-level explanations, data-quality review, session-only refresh, CSV export, and an optional grounded AI briefing.
 
+**Live reviewer app:** [account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app](https://account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app)
+
 ## What reviewers can do
 
 - Switch from the VP overview to each rep’s Top 10.
