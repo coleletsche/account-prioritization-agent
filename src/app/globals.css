@@ -448,8 +448,7 @@ select:focus-visible {
 }
 
 .weight-panel {
-  position: sticky;
-  top: 104px;
+  position: static;
   border-radius: 24px;
   background: #0e0d0d;
   padding: 26px;
@@ -521,6 +520,87 @@ select:focus-visible {
   color: #a9264e;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.briefing-panel {
+  border: 1px solid rgba(229, 90, 127, 0.28);
+  border-radius: 24px;
+  background: #171616;
+  padding: 25px;
+  color: white;
+  box-shadow: 0 22px 52px rgba(14, 13, 13, 0.13);
+}
+
+.briefing-icon {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(229, 90, 127, 0.16);
+  color: #ff8dab;
+}
+
+.briefing-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.briefing-empty svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #ff8dab;
+}
+
+.briefing-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: rgba(255, 190, 92, 0.12);
+  padding: 5px 8px;
+  color: #ffd6a1;
+  font-size: 0.625rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.briefing-source-ai {
+  background: rgba(90, 218, 147, 0.12);
+  color: #a5efc6;
+}
+
+.briefing-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: #e55a7f;
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.briefing-button:hover {
+  background: #d9416c;
+}
+
+.briefing-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .drawer-panel {

@@ -8,6 +8,7 @@ import { buildRankingCsv, rankingFilename } from "@/lib/export";
 import { getEffectiveReviewQueue } from "@/lib/quality";
 import { DEFAULT_WEIGHTS, daysBetween, rankOrganizations } from "@/lib/scoring";
 import { AccountDrawer } from "./account-drawer";
+import { BriefingPanel } from "./briefing-panel";
 import { RankingTable } from "./ranking-table";
 import { ReviewQueue } from "./review-queue";
 import { UploadDialog } from "./upload-dialog";
@@ -174,7 +175,7 @@ export function AccountDashboard() {
             <RankingTable accounts={visible} showGlobalRank={view === "vp"} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
           </section>
 
-          <aside className="space-y-6"><WeightControls weights={weights} onChange={setWeights} /><section className="method-card"><div className="flex items-center gap-3"><span className="metric-icon"><SlidersHorizontal size={18} /></span><p className="font-extrabold text-ink">What this score means</p></div><p className="mt-4 text-sm leading-6 text-muted">It is a relative weekly ordering—not a prediction. Every point comes from visible CRM fields and matched engagement.</p><button type="button" className="text-link mt-5" onClick={() => setMethodologyOpen(true)}>See the full methodology</button></section></aside>
+          <aside className="space-y-6"><WeightControls weights={weights} onChange={setWeights} /><BriefingPanel accounts={ranked} weights={weights} asOfDate={asOfDate} issues={reviewIssues} statistics={data.statistics} /><section className="method-card"><div className="flex items-center gap-3"><span className="metric-icon"><SlidersHorizontal size={18} /></span><p className="font-extrabold text-ink">What this score means</p></div><p className="mt-4 text-sm leading-6 text-muted">It is a relative weekly ordering—not a prediction. Every point comes from visible CRM fields and matched engagement.</p><button type="button" className="text-link mt-5" onClick={() => setMethodologyOpen(true)}>See the full methodology</button></section></aside>
         </div>
       </div>
 
