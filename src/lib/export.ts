@@ -1,4 +1,5 @@
 import Papa from "papaparse";
+import type { AccountRecommendation } from "./agent";
 import type { DataQualityIssue, RankedAccount, ScoreWeights } from "./data";
 
 function safeCell(value: string | number | undefined): string | number {
@@ -7,12 +8,13 @@ function safeCell(value: string | number | undefined): string | number {
   return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
-export function buildRankingCsv(accounts: RankedAccount[], options: { asOfDate: string; weights: ScoreWeights; reviewIssues?: DataQualityIssue[] }): string {
+export function buildRankingCsv(accounts: RankedAccount[], options: { asOfDate: string; weights: ScoreWeights; reviewIssues?: DataQualityIssue[]; recommendations?: ReadonlyMap<string, AccountRecommendation> }): string {
   const rows = accounts.map((account) => {
     const organization = account.organization;
     const runtimeWarnings = (options.reviewIssues ?? []).filter((issue) => issue.entityName === organization.canonicalName && !organization.issues.some((existing) => existing.id === issue.id));
     const warnings = [...organization.issues, ...runtimeWarnings].map((issue) => `${issue.message} ${issue.evidence}`).join(" | ");
     const latest = organization.engagements[0];
+    const recommendation = options.recommendations?.get(organization.id);
     return {
       rank: account.rank,
       owner_rank: account.ownerRank,
@@ -30,8 +32,14 @@ export function buildRankingCsv(accounts: RankedAccount[], options: { asOfDate: 
       contact_timing_score: account.factors.timing?.toFixed(2) ?? "",
       account_score: account.accountScore?.toFixed(2) ?? "",
       priority_band: account.priorityBand,
+      in_daily_queue: account.ownerRank <= 10 ? "yes" : "no",
       dominant_factor: account.dominantFactor,
       reason: safeCell(account.reason),
+      why_now: safeCell(recommendation?.why_now),
+      recommended_action: recommendation?.recommended_action ?? "",
+      action_urgency: recommendation?.urgency ?? "",
+      call_angle: safeCell(recommendation?.call_angle),
+      agent_confidence: recommendation?.confidence ?? "",
       raw_intent: account.rawIntent.toFixed(4),
       last_contact_date: organization.lastContactDate ?? "",
       latest_engagement_type: latest?.eventType ?? "",

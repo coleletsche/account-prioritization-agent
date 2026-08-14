@@ -1,18 +1,18 @@
 # Velora Account Prioritization MVP
 
-A desktop-first Next.js application that turns CRM account and engagement exports into a transparent Monday call plan. It gives Sales leadership a global Top 25, each SDR up to ten accounts, factor-level explanations, data-quality review, session-only refresh, CSV export, and an optional grounded AI briefing.
+A desktop-first Next.js application that turns CRM account and engagement exports into deterministic daily call queues with policy-checked AI interpretation. Sales leadership gets a global Top 25, each SDR gets ten accounts, and every row includes reproducible scores, a P0–P3 band, recent signals, why now, and a recommended action.
 
 **Live reviewer app:** [account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app](https://account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app)
 
 ## What reviewers can do
 
-- Switch from the VP overview to each rep’s Top 10.
+- Select the VP or a rep persona from the top navigation; reps receive a read-only daily Top 10.
 - Filter by owner, tier, region, industry, confidence, or account name.
 - Open an account to inspect score factors, exact inputs, engagement history, aliases, and warnings.
 - Change the three scoring weights while preserving a 100% total, then reset to defaults.
 - Validate two replacement exports before atomically applying them in browser memory.
 - Inspect every data-quality flag and download the full reproducible ranking.
-- Generate an optional weekly briefing that cannot change scores or ranks.
+- Interpret every rep’s daily queue with structured AI output that cannot change scores, bands, validation, or ranks.
 
 ## Run locally
 
@@ -25,14 +25,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The bundled assessment data loads automatically for the week of `2026-08-17`.
 
-The AI briefing is optional. Without a key it returns a visible deterministic fallback. To enable it locally:
+AI interpretation is optional. Without a key the agent returns its deterministic P0–P3 action plan. To enable model-written why-now and call-angle text locally:
 
 ```bash
 cp .env.example .env.local
 # Set OPENAI_API_KEY in .env.local, then restart npm run dev.
 ```
 
-`.env.local` is ignored by Git and Vercel packaging. The server sends only at most 40 ranked summaries, active weights, as-of date, and aggregate quality counts to `gpt-5.4-nano`; raw exports are never sent.
+`.env.local` is ignored by Git and Vercel packaging. The server sends at most 40 validated daily-queue summaries to `gpt-5.4-nano`; raw exports, websites, and free-form prompts are never sent.
 
 ## Verify
 
@@ -43,7 +43,7 @@ npx playwright install chromium
 npm run verify
 ```
 
-`npm run verify` runs ESLint, 30 Vitest unit/component tests, a production build, and five Playwright workflows covering sample load, SDR navigation, reranking/reset, account detail, review queue, good and bad uploads, CSV download, AI/fallback rendering, keyboard dismissal, and the 390px mobile layout.
+`npm run verify` runs ESLint, 52 Vitest unit/component tests, a production build, and five Playwright workflows covering sample load, personas, reranking/reset, account evidence, review, uploads, CSV download, AI/fallback actions, keyboard dismissal, and the 390px mobile layout.
 
 Individual commands:
 
@@ -58,12 +58,13 @@ npm run test:e2e
 
 | Factor | Definition |
 | --- | --- |
-| Intent | `event weight × ln(1 + count) × 2^(-age_days / 30)`, normalized to cohort p95 and capped at 100 |
+| Intent | `event weight × ln(1 + count) × 2^(-age_days / 30)`, with a capped breadth multiplier; normalized to p95 and capped at 100 |
 | Account value | 65% tier and 35% ARR-to-p95; reweighted over available inputs |
-| Contact timing | `min(days since contact / 90, 1) × 100`; missing/future dates use neutral 50 plus a warning |
+| Contact timing | `min(days since contact / 90, 1) × 100`; missing/future values stay unknown and are omitted |
+| Account score | Account value and contact timing combined over the inputs that are known |
 | Final score | 55% Intent + 30% Account Value + 15% Contact Timing by default |
 
-Tier values are Strategic 100, Enterprise 85, Mid-Market 55, and SMB 25. Event weights are demo request 10, webinar 6, content download 5, page visit 2, and email open 1. Ties break by intent, then account value, then canonical organization name. Confidence never changes the score.
+Tier values are Strategic 100, Enterprise 85, Mid-Market 55, and SMB 25. Event weights are demo request 10, webinar 6, content download 5, page visit 2, and email open 1. P0 is 80+, P1 is 65–79.99, P2 is 45–64.99, and P3 is below 45. Ties break by intent, account value, then canonical name. Confidence never changes the score.
 
 Important: ARR is treated as an unconfirmed account-value proxy. The priority score is a relative weekly heuristic, not a conversion probability.
 
@@ -72,8 +73,9 @@ Important: ARR is treated as an unconfirmed account-value proxy. The priority sc
 - The account file must contain `account_name`, `industry`, `arr`, `last_contact_date`, `account_tier`, `website`, `region`, and `owner`.
 - The engagement file must be a JSON array with `account_name`, `event_type`, `event_date`, and `event_count`.
 - Structural failures reject both uploaded files together. Invalid rows become review issues rather than crashing the import.
-- Organizations resolve by normalized valid hostname. Same-domain rows merge only when nonempty owner, tier, region, and industry values do not conflict.
-- Engagement names use Unicode/case/punctuation normalization, legal-suffix removal, and a fixed abbreviation dictionary. Ambiguous signals are held for review rather than fuzzy-attached.
+- Optional stable `account_id`, domain, confirmed `aliases`, and `do_not_contact` fields are supported. Resolution prefers exact ID, domain, name, then deterministic alias normalization.
+- Same-identity rows merge only when nonempty owner, tier, region, industry, and suppression values do not conflict. Ambiguous signals are held for review rather than guessed.
+- Every usable record is labeled `valid`, `warning`, or `blocked`. Exact duplicate events remain visible but only the first is scored.
 
 Expected bundled baseline: 300 account rows, 360 engagement rows, 286 resolved organizations, 14 duplicate-domain groups, and all 360 signals uniquely matched. One invalid identity is held from ranking, leaving 285 eligible organizations.
 
@@ -81,11 +83,11 @@ Expected bundled baseline: 300 account rows, 360 engagement rows, 286 resolved o
 
 Select one CSV and one JSON file, validate them, review the preview, then explicitly apply. Files remain in browser memory and a page refresh restores the bundled sample. The full-ranking export includes global and owner ranks, aliases, factor scores, confidence, reasons, warnings, effective weights, and as-of date.
 
-The briefing route rejects free-form prompts, more than 40 accounts, bodies over 64 KB, and invalid schemas. It has a 12-second timeout and best-effort per-IP throttling. Missing credentials, rate limits, timeouts, invalid model output, or model errors return a deterministic fallback while preserving the ranking.
+The recommendation route rejects free-form prompts, more than 40 accounts, bodies over 96 KB, mismatched account IDs, and invalid schemas. It has a 20-second timeout and best-effort per-IP throttling. Failures return deterministic actions. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
 
 ## Deploy to Vercel
 
-Deploy the app first without an AI key; the briefing safely uses its deterministic fallback:
+Deploy the app first without an AI key; the agent safely uses its deterministic action plan:
 
 ```bash
 vercel deploy -y
@@ -99,8 +101,11 @@ Before enabling AI on a public deployment, set an OpenAI project spend cap. Then
 - `src/lib/scoring.ts` — pure deterministic scoring
 - `src/lib/quality.ts` — as-of-date quality checks
 - `src/lib/export.ts` — safe full-ranking CSV generation
-- `src/lib/briefing*.ts` — bounded briefing contract, fallback, and server handler
-- `src/components/dashboard/` — dashboard, drawer, controls, upload/review, and briefing UI
+- `src/lib/agent/contracts.ts` — bounded validated facts and structured output schemas
+- `src/lib/agent/policy.ts` — deterministic fallback actions and authoritative blocking rules
+- `src/lib/agent/reasoning.ts` — isolated OpenAI call and operational safeguards
+- `src/lib/agent/orchestrator.ts` — model-output identity checks and post-model policy
+- `src/components/dashboard/` — dashboard, drawer, controls, upload/review, and recommendation UI
 - `e2e/` — Playwright workflows and malformed fixtures
 - [`REQUIREMENTS.md`](./REQUIREMENTS.md) — one-page product and decision brief
 - [`WALKTHROUGH.md`](./WALKTHROUGH.md) — three-minute video script and shot list

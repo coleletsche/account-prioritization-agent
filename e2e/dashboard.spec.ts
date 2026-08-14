@@ -10,7 +10,7 @@ const invalidSignalsPath = resolve(workspace, "e2e/fixtures/invalid-signals.json
 
 async function openDashboard(page: Page) {
   await page.goto("/");
-  await expect(page.getByText("Team overview", { exact: true })).toBeVisible();
+  await expect(page.getByText("Team daily queue", { exact: true })).toBeVisible();
 }
 
 function watchRuntimeErrors(page: Page) {
@@ -38,7 +38,7 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await expect(page.getByLabel("Reset score weights")).toBeDisabled();
 
   await page.getByLabel("Select persona").selectOption("Rep A");
-  await expect(page.getByText("Rep A’s call list", { exact: true })).toBeVisible();
+  await expect(page.getByText("Rep A’s daily call queue", { exact: true })).toBeVisible();
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(10);
   await expect(page.getByLabel("Published scoring strategy")).toContainText("Intent55%");
   await expect(page.getByLabel("Intent weight")).toHaveCount(0);
@@ -48,6 +48,7 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await expect(page.getByRole("button", { name: "Review issues", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Export full ranking", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Prioritization week")).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Interpret daily queues", exact: true })).toBeVisible();
 
   await page.getByTestId("ranking-table").locator("tbody tr").first().getByRole("button").first().click();
   await expect(page.getByRole("dialog").getByText("Factor breakdown", { exact: true })).toBeVisible();
@@ -110,29 +111,37 @@ test("exposes the review queue and downloads a reproducible full ranking", async
   expect(errors).toEqual([]);
 });
 
-test("renders both grounded AI and deterministic fallback briefings without reranking", async ({ page }) => {
+test("renders policy-checked AI and deterministic fallback actions without reranking", async ({ page }) => {
   let requestCount = 0;
-  await page.route("**/api/briefing", async (route) => {
+  await page.route("**/api/recommendations", async (route) => {
     requestCount += 1;
     const body = route.request().postDataJSON();
     expect(body.prompt).toBeUndefined();
     expect(body.accounts.length).toBeLessThanOrEqual(40);
     const source = requestCount === 1 ? "ai" : "fallback";
+    const recommendations = body.accounts.map((account: { account_id: string; account_name: string }) => ({
+      account_id: account.account_id,
+      why_now: source === "ai" ? `AI interpretation for ${account.account_name}.` : `Deterministic fallback for ${account.account_name}.`,
+      recommended_action: "call_this_week",
+      urgency: "high",
+      call_angle: "Use only the supplied CRM and engagement evidence.",
+      confidence: "high",
+    }));
     await route.fulfill({ status: source === "ai" ? 200 : 429, contentType: "application/json", body: JSON.stringify({
-      briefing: { headline: source === "ai" ? "The fixed shortlist is ready" : "The same fixed shortlist remains ready", themes: ["Intent leads."], actions: ["Call the first ranked account."], caveats: ["Priority is not a probability."] },
+      recommendations,
       source,
-      ...(source === "fallback" ? { warning: "Briefing request limit reached. Showing the deterministic summary." } : {}),
+      ...(source === "fallback" ? { warning: "Recommendation request limit reached. Showing the deterministic action plan." } : {}),
     }) });
   });
 
   await openDashboard(page);
   const leader = await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText();
-  await page.getByRole("button", { name: "Generate briefing", exact: true }).click();
-  await expect(page.getByText("The fixed shortlist is ready", { exact: true })).toBeVisible();
-  await expect(page.locator(".briefing-source")).toHaveText(/AI grounded/i);
-  await page.getByRole("button", { name: "Refresh briefing", exact: true }).click();
-  await expect(page.getByText("The same fixed shortlist remains ready", { exact: true })).toBeVisible();
-  await expect(page.locator(".briefing-source")).toHaveText(/Deterministic fallback/i);
+  await page.getByRole("button", { name: "Interpret daily queues", exact: true }).click();
+  await expect(page.getByTestId("ranking-table").locator("tbody tr").first()).toContainText("AI interpretation for");
+  await expect(page.locator(".agent-source")).toHaveText(/AI interpreted/i);
+  await page.getByRole("button", { name: "Refresh AI actions", exact: true }).click();
+  await expect(page.getByTestId("ranking-table").locator("tbody tr").first()).toContainText("Deterministic fallback for");
+  await expect(page.locator(".agent-source")).toHaveText(/Deterministic plan/i);
   expect(await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText()).toBe(leader);
 });
 

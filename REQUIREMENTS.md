@@ -2,29 +2,29 @@
 
 ## Interpretation
 
-Give Sales a dependable, reproducible Monday call plan: a global Top 25 for the VP and up to ten eligible organizations per SDR. “Priority” means relative usefulness for outreach this week based on recent engagement, account value, and time since contact. It is a transparent operating heuristic, not a conversion probability.
+Give Sales a dependable daily call queue: a global Top 25 for the VP and ten eligible organizations per SDR. “Priority” is a deterministic ordering from recent engagement, account value, and contact staleness. An LLM may interpret the fixed result and recommend an action, but the score remains a transparent heuristic—not a conversion probability.
 
 ## MVP scope and assumptions
 
 - Inputs are the supplied account CSV and engagement JSON, treated as CRM exports. The bundled week is August 17, 2026; users may choose another as-of date.
 - Account owner partitions rep queues. Region and industry are filters only.
 - ARR is an unconfirmed account-value proxy, not necessarily contract value or open pipeline.
-- Processing, uploaded files, and briefing output are session-only. No CRM connection, persistence, auth, or writeback is required.
-- AI is optional and summarizes the deterministic ranking; it never scores, reorders, or invents account evidence.
+- Processing, uploaded files, and agent output are session-only. No CRM connection, persistence, auth, or writeback is required.
+- AI is optional and returns only `why_now`, `recommended_action`, `urgency`, `call_angle`, and `confidence`. It never scores, reorders, clears warnings, or invents evidence.
 
 ## Prioritization approach
 
-Intent is event weight × `ln(1 + count)` × 30-day half-life, normalized to the cohort p95 and capped at 100. Event weights are demo request 10, webinar 6, content download 5, page visit 2, and email open 1. Account value combines tier (65%) and ARR-to-p95 (35%), reweighted over available inputs. Contact timing reaches 100 after 90 days; missing or future dates receive neutral 50 with a warning. The default score is 55% intent, 30% account value, and 15% contact timing. Ties break by intent, value, then canonical name. Users may change weights, which always total 100%.
+Intent is event weight × `ln(1 + count)` × 30-day half-life with a small capped signal-breadth multiplier, normalized to p95. Demo requests weigh 10 versus 1 for email opens. Account value combines tier (65%) and ARR-to-p95 (35%); account score combines available value and contact staleness. Missing/future values remain unknown and are omitted. Priority preserves the 55% intent, 30% value, and 15% timing defaults, reweighted over known inputs. Bands are fixed: P0 ≥80, P1 ≥65, P2 ≥45, otherwise P3.
 
 ## Data and confidence decisions
 
-Inputs are Zod validated. Required-file schema failures reject the refresh atomically; invalid row values remain visible in counts or the review queue. Valid hostnames define organization candidates. Same-domain rows merge only when owner, tier, region, and industry do not conflict; aliases, latest valid contact, and highest valid nonnegative ARR are retained. Engagement names use deterministic normalization and a fixed abbreviation dictionary. Ambiguous matches are never fuzzy-attached.
+Inputs are Zod validated and labeled `valid`, `warning`, or `blocked`. Required-schema failures reject refresh atomically; missing ARR/contact, negative or suspicious ARR, future dates, unknown events, invalid suppression, contradictory records, and exact duplicate events remain visible. Resolution prefers exact CRM ID, domain, name, then confirmed/deterministic alias. Ambiguous matches are never guessed. Duplicate events are preserved as evidence but the duplicate copy is explicitly blocked from scoring.
 
-Confidence is separate from score: high has no warnings, medium has usable warnings, and low is held from ranking. The review queue shows category, severity, row evidence, and a suggested CRM correction. Stale data, future dates, unmatched signals, ownership conflicts, and invalid identities are explicit.
+Confidence is separate from score: high has no warnings, medium has usable warnings, and low is held from ranking. Deterministic policy forces `needs_data_review` for critical data or unresolved identity and `no_action` for explicit suppression, even after model output. The separate review queue shows category, severity, row evidence, and a suggested CRM correction.
 
 ## Definition of success
 
-The supplied files reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, and 360 uniquely mapped signals. A reviewer can find a rep’s Top 10 and explain the first rank in under two minutes. Every rank is deterministic and exportable, each source row is accounted for, and failed uploads cannot replace the current list. In production, compare contact, meeting, and opportunity rates by rank band while monitoring coverage, overrides, stale exports, and review-queue volume.
+The supplied files reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, and 360 uniquely mapped signals. Every rep receives ten accounts and the VP’s bounded agent request contains exactly 40 summaries. A reviewer can explain the first rank and action in under two minutes. In production, compare contact, meeting, and opportunity rates by band and recommended action while monitoring coverage, policy overrides, stale exports, and review volume.
 
 ## Non-goals and next steps
 

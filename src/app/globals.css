@@ -376,7 +376,7 @@ select:focus-visible {
 
 .ranking-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 1180px;
   border-collapse: collapse;
   table-layout: auto;
 }
@@ -488,6 +488,68 @@ select:focus-visible {
   background: #fbe3ea;
 }
 
+.priority-band {
+  display: inline-flex;
+  min-width: 27px;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 3px 5px;
+  color: white;
+  font-size: 0.5625rem;
+  font-weight: 900;
+}
+
+.band-p0 {
+  background: #b22851;
+}
+
+.band-p1 {
+  background: #d96c25;
+}
+
+.band-p2 {
+  background: #6c5fc7;
+}
+
+.band-p3 {
+  background: #6c6a78;
+}
+
+.action-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #f3f2f8;
+  padding: 6px 9px;
+  color: #4f4d70;
+  font-size: 0.625rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.action-call_today,
+.action-call_this_week {
+  background: #fbe3ea;
+  color: #a9264e;
+}
+
+.action-email {
+  background: #edeaff;
+  color: #4f3fb0;
+}
+
+.action-research,
+.action-needs_data_review {
+  background: #fff1ce;
+  color: #734b07;
+}
+
+.action-no_action {
+  background: #ffe5ec;
+  color: #9b294a;
+}
+
 .empty-state {
   display: flex;
   min-height: 280px;
@@ -517,6 +579,65 @@ select:focus-visible {
   padding: 26px;
   color: white;
   box-shadow: 0 22px 52px rgba(14, 13, 13, 0.16);
+}
+
+.agent-panel {
+  border-radius: 24px;
+  background: #211f54;
+  padding: 25px;
+  color: white;
+  box-shadow: 0 22px 52px rgba(33, 31, 84, 0.2);
+}
+
+.agent-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(229, 90, 127, 0.18);
+  color: #ff9ab5;
+}
+
+.agent-source {
+  display: inline-flex;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  padding: 5px 8px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.5625rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.agent-source-ai {
+  background: rgba(90, 218, 147, 0.14);
+  color: #a5efc6;
+}
+
+.button-agent {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: #e55a7f;
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.button-agent:hover {
+  background: #d9416c;
+}
+
+.button-agent:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .dark-icon-button,
@@ -675,6 +796,13 @@ select:focus-visible {
   overflow-y: auto;
   background: white;
   box-shadow: -24px 0 70px rgba(14, 13, 13, 0.18);
+}
+
+.agent-recommendation {
+  border: 1px solid rgba(229, 90, 127, 0.24);
+  border-radius: 20px;
+  background: #fffafb;
+  padding: 20px;
 }
 
 .confidence-pill {

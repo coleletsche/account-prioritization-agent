@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarDays, Database, Download, FileWarning, Info, ListChecks, LockKeyhole, RefreshCw, Search, Signal, SlidersHorizontal, UserRoundCheck, Users } from "lucide-react";
+import { buildSalesAgentRequest, deterministicRecommendations, type SalesAgentApiResponse } from "@/lib/agent";
 import { processCrmExports, type EntityResolutionResult, type RankedAccount, type ScoreWeights } from "@/lib/data";
 import { buildRankingCsv, rankingFilename } from "@/lib/export";
 import { getEffectiveReviewQueue } from "@/lib/quality";
-import { DEFAULT_WEIGHTS, daysBetween, rankOrganizations } from "@/lib/scoring";
+import { buildDailyQueues, DEFAULT_WEIGHTS, daysBetween, rankOrganizations } from "@/lib/scoring";
 import { AccountDrawer } from "./account-drawer";
-import { BriefingPanel } from "./briefing-panel";
 import { RankingTable } from "./ranking-table";
+import { RecommendationPanel } from "./recommendation-panel";
 import { ReviewQueue } from "./review-queue";
 import { UploadDialog } from "./upload-dialog";
 import { useEscape } from "./use-escape";
@@ -38,6 +39,7 @@ export function AccountDashboard() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [datasetLabel, setDatasetLabel] = useState("Bundled assessment data");
+  const [agentResult, setAgentResult] = useState<{ scopeKey: string; response: SalesAgentApiResponse }>();
   useEscape(methodologyOpen, () => setMethodologyOpen(false));
 
   useEffect(() => {
@@ -59,6 +61,17 @@ export function AccountDashboard() {
   const selected = ranked.find((account) => account.organization.id === selectedId);
   const isVp = persona === "vp";
   const personaAccounts = useMemo(() => isVp ? ranked : ranked.filter((account) => account.organization.owner === persona), [ranked, isVp, persona]);
+  const dailyQueueAccounts = useMemo(() => {
+    if (!isVp) return personaAccounts.slice(0, 10);
+    return Object.values(buildDailyQueues(ranked)).flat().sort((left, right) => left.rank - right.rank);
+  }, [isVp, personaAccounts, ranked]);
+  const agentRequest = useMemo(() => dailyQueueAccounts.length > 0 ? buildSalesAgentRequest(dailyQueueAccounts, { asOfDate, issues: reviewIssues }) : undefined, [dailyQueueAccounts, asOfDate, reviewIssues]);
+  const agentScopeKey = useMemo(() => JSON.stringify({ persona, asOfDate, weights, accounts: dailyQueueAccounts.map((account) => [account.organization.id, account.priorityScore]) }), [persona, asOfDate, weights, dailyQueueAccounts]);
+  const deterministicAgentResponse = useMemo<SalesAgentApiResponse>(() => ({ recommendations: agentRequest ? deterministicRecommendations(agentRequest) : [], source: "fallback" }), [agentRequest]);
+  const activeAgentResponse = agentResult?.scopeKey === agentScopeKey ? agentResult.response : deterministicAgentResponse;
+  const recommendations = useMemo(() => new Map(activeAgentResponse.recommendations.map((recommendation) => [recommendation.account_id, recommendation])), [activeAgentResponse]);
+  const selectedRecommendation = selected ? recommendations.get(selected.organization.id) : undefined;
+  const selectedIssues = selected ? reviewIssues.filter((issue) => issue.entityName === selected.organization.canonicalName) : [];
 
   const visible = useMemo(() => {
     let candidates = isVp ? ranked : personaAccounts.slice(0, 10);
@@ -69,7 +82,7 @@ export function AccountDashboard() {
     if (confidenceFilter !== "all") candidates = candidates.filter((account) => account.organization.confidence === confidenceFilter);
     const normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery) candidates = candidates.filter((account) => [account.organization.canonicalName, ...account.organization.aliases].some((value) => value.toLowerCase().includes(normalizedQuery)));
-    return candidates.slice(0, isVp ? 25 : 10);
+    return candidates.slice(0, isVp && ownerFilter === "all" ? 25 : 10);
   }, [ranked, personaAccounts, isVp, ownerFilter, tierFilter, regionFilter, industryFilter, confidenceFilter, query]);
 
   if (error) return (
@@ -92,7 +105,7 @@ export function AccountDashboard() {
   ];
 
   const exportRanking = () => {
-    const csv = buildRankingCsv(ranked, { asOfDate, weights, reviewIssues });
+    const csv = buildRankingCsv(ranked, { asOfDate, weights, reviewIssues, recommendations });
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -153,9 +166,9 @@ export function AccountDashboard() {
       <div className="page-shell py-9 sm:py-12">
         <section className="grid items-end gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
-            <p className="eyebrow">Monday call plan</p>
+            <p className="eyebrow">Daily sales agent</p>
             <h1 className="mt-4 max-w-4xl text-[clamp(2.75rem,5vw,4rem)] font-black leading-[0.98] tracking-[-0.05em] text-ink">Know who to call <span className="text-brand">first.</span></h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">A transparent weekly account ranking that combines buyer intent, account value, and contact timing—without pretending a heuristic is a conversion probability.</p>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">A deterministic account ranking with policy-checked AI interpretation—so every rep knows why an account matters and what to do next.</p>
           </div>
           <div className={`date-control ${!isVp ? "date-control-locked" : ""}`}><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-muted">Prioritization week</p><p className="mt-1 text-sm text-ink">{isVp ? "Signals decay relative to this date." : "Set by the VP for this published queue."}</p></div><input aria-label="Prioritization week" type="date" value={asOfDate} disabled={!isVp} onChange={(event) => setAsOfDate(event.target.value)} /></div>
         </section>
@@ -182,7 +195,7 @@ export function AccountDashboard() {
         <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <section className="min-w-0 rounded-card border border-line bg-white shadow-card">
             <div className="border-b border-line px-5 pt-5 sm:px-7 sm:pt-7">
-              <div><p className="eyebrow">Prioritized accounts</p><h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-ink">{isVp ? "Team overview" : `${persona}’s call list`}</h2><p className="mt-2 text-sm text-muted">{isVp ? "Review the global Top 25 or filter by owner." : "Your VP-published Top 10 for the selected week."}</p></div>
+              <div><p className="eyebrow">Prioritized accounts</p><h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-ink">{isVp ? "Team daily queue" : `${persona}’s daily call queue`}</h2><p className="mt-2 text-sm text-muted">{isVp ? "Review the global Top 25 or choose an owner to see their daily Top 10." : "Your VP-published Top 10 with deterministic priority and interpreted next actions."}</p></div>
 
               <div className="mt-6 grid gap-3 pb-5 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="search-field lg:col-span-2"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
@@ -193,22 +206,23 @@ export function AccountDashboard() {
                 <select aria-label="Filter by confidence" className="filter-select" value={confidenceFilter} onChange={(event) => setConfidenceFilter(event.target.value)}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-4 px-5 py-4 text-xs text-muted sm:px-7"><span>Showing {visible.length} of {isVp ? Math.min(25, ranked.length) : Math.min(10, personaAccounts.length)} prioritized accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
-            <RankingTable accounts={visible} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
+            <div className="flex items-center justify-between gap-4 px-5 py-4 text-xs text-muted sm:px-7"><span>Showing {visible.length} of {isVp && ownerFilter === "all" ? Math.min(25, ranked.length) : Math.min(10, personaAccounts.length)} prioritized accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
+            <RankingTable accounts={visible} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
           </section>
 
           <aside className="space-y-6">
-            {isVp ? <><WeightControls weights={weights} onChange={setWeights} /><BriefingPanel accounts={ranked} weights={weights} asOfDate={asOfDate} issues={reviewIssues} statistics={data.statistics} /></> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your queue uses the VP’s active strategy. Switch to the VP persona to preview the controls.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>}
+            {isVp ? <WeightControls weights={weights} onChange={setWeights} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your queue uses the VP’s active strategy. Switch to the VP persona to preview the controls.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>}
+            <RecommendationPanel request={agentRequest} result={activeAgentResponse} onResult={(response) => setAgentResult({ scopeKey: agentScopeKey, response })} />
             <section className="method-card"><div className="flex items-center gap-3"><span className="metric-icon"><SlidersHorizontal size={18} /></span><p className="font-extrabold text-ink">What this score means</p></div><p className="mt-4 text-sm leading-6 text-muted">It is a relative weekly ordering—not a prediction. Every point comes from visible CRM fields and matched engagement.</p><button type="button" className="text-link mt-5" onClick={() => setMethodologyOpen(true)}>See the full methodology</button></section>
           </aside>
         </div>
       </div>
 
-      <AccountDrawer account={selected} onClose={() => setSelectedId(undefined)} />
+      <AccountDrawer account={selected} recommendation={selectedRecommendation} issues={selectedIssues} recommendationSource={activeAgentResponse.source} onClose={() => setSelectedId(undefined)} />
       {uploadOpen && <UploadDialog open onClose={() => setUploadOpen(false)} onApply={applyUpload} />}
       {reviewOpen && <ReviewQueue open issues={reviewIssues} onClose={() => setReviewOpen(false)} />}
 
-      {methodologyOpen && <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><button type="button" className="absolute inset-0 bg-ink/55" onClick={() => setMethodologyOpen(false)} aria-label="Dismiss methodology" /><section className="relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-card bg-white p-7 shadow-2xl sm:p-9" role="dialog" aria-modal="true" aria-labelledby="method-title"><p className="eyebrow">Transparent by design</p><h2 id="method-title" className="mt-3 text-3xl font-black tracking-[-0.04em] text-ink">How the weekly score works</h2><div className="mt-7 grid gap-4 sm:grid-cols-3">{[["Intent", "Weighted event value × log volume × 30-day decay."], ["Account value", "65% tier and 35% ARR proxy, reweighted when data is missing."], ["Contact timing", "Time since last contact, capped at 90 days; missing and future dates are neutral."]].map(([title, body]) => <article className="method-factor" key={title}><h3>{title}</h3><p>{body}</p></article>)}</div><div className="mt-6 rounded-[18px] bg-blush p-5 text-sm leading-6 text-ink"><strong>Important:</strong> ARR is treated as an unconfirmed account-value proxy. Industry and region are filters, not score inputs. Confidence never secretly changes the rank.</div><p className="mt-5 text-xs leading-5 text-muted">Persona switching demonstrates the intended VP and SDR experiences in this MVP. It is not an authentication or authorization boundary; production access would require identity, RBAC, and server-side enforcement.</p><button type="button" className="button-primary mt-7 w-full" onClick={() => setMethodologyOpen(false)}>Back to the call list</button></section></div>}
+      {methodologyOpen && <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><button type="button" className="absolute inset-0 bg-ink/55" onClick={() => setMethodologyOpen(false)} aria-label="Dismiss methodology" /><section className="relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-card bg-white p-7 shadow-2xl sm:p-9" role="dialog" aria-modal="true" aria-labelledby="method-title"><p className="eyebrow">Transparent by design</p><h2 id="method-title" className="mt-3 text-3xl font-black tracking-[-0.04em] text-ink">How the priority agent works</h2><div className="mt-7 grid gap-4 sm:grid-cols-3">{[["Intent", "Event strength × log frequency × 30-day decay, with a small capped signal-breadth multiplier."], ["Account score", "Available tier and ARR value plus contact staleness; unknown inputs stay unknown and are omitted."], ["AI interpretation", "Explains why now and suggests an action after deterministic score, identity, suppression, and quality policy are fixed."]].map(([title, body]) => <article className="method-factor" key={title}><h3>{title}</h3><p>{body}</p></article>)}</div><div className="mt-6 rounded-[18px] bg-blush p-5 text-sm leading-6 text-ink"><strong>Important:</strong> ARR is an unconfirmed account-value proxy. P0/P1/P2/P3 are fixed score bands, not conversion probabilities. The LLM cannot score, rank, clear warnings, or bypass contact suppression.</div><p className="mt-5 text-xs leading-5 text-muted">Persona switching demonstrates the intended VP and SDR experiences in this MVP. It is not an authentication or authorization boundary; production access would require identity, RBAC, and server-side enforcement.</p><button type="button" className="button-primary mt-7 w-full" onClick={() => setMethodologyOpen(false)}>Back to the call list</button></section></div>}
     </main>
   );
 }

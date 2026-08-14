@@ -72,6 +72,7 @@ export function UploadDialog({ open, onClose, onApply }: { open: boolean; onClos
                 ].map(([label, value]) => <div key={label} className="preview-stat"><dt>{label}</dt><dd>{value}</dd></div>)}
               </dl>
               <p className="mt-4 text-xs leading-5 text-muted">{preview.statistics.matchedSignals} signals uniquely matched; {preview.statistics.unmatchedSignals} require review. {preview.statistics.excludedOrganizations} organizations are held out of ranking.</p>
+              <p className="mt-2 text-xs font-bold leading-5 text-ink">Status: {preview.statistics.validOrganizations} valid · {preview.statistics.warningOrganizations} warning · {preview.statistics.blockedOrganizations} blocked · {preview.statistics.blockedSignals} signals excluded from scoring</p>
             </section>
           )}
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, Calendar, ExternalLink, Signal, X } from "lucide-react";
-import type { RankedAccount } from "@/lib/data";
+import { AlertTriangle, Bot, Calendar, ExternalLink, Signal, X } from "lucide-react";
+import type { AccountRecommendation } from "@/lib/agent";
+import type { DataQualityIssue, RankedAccount } from "@/lib/data";
 import { daysBetween } from "@/lib/scoring";
 import { useEscape } from "./use-escape";
 
@@ -14,11 +15,12 @@ function formatCurrency(value?: number) {
   return value === undefined ? "Not available" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 }
 
-export function AccountDrawer({ account, onClose }: { account?: RankedAccount; onClose: () => void }) {
+export function AccountDrawer({ account, recommendation, recommendationSource = "fallback", issues = [], onClose }: { account?: RankedAccount; recommendation?: AccountRecommendation; recommendationSource?: "ai" | "fallback"; issues?: DataQualityIssue[]; onClose: () => void }) {
   useEscape(Boolean(account), onClose);
   if (!account) return null;
   const { organization } = account;
   const futureContact = organization.lastContactDate ? daysBetween(organization.lastContactDate, account.asOfDate) < 0 : false;
+  const warnings = [...new Map([...organization.issues, ...issues].map((issue) => [issue.id, issue])).values()];
 
   return (
     <div className="fixed inset-0 z-50" role="presentation">
@@ -36,13 +38,19 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
           <section className="rounded-card bg-ink p-6 text-white">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.13em] text-white/50">Priority score</p>
+                <p className="text-xs font-bold uppercase tracking-[0.13em] text-white/50">Priority score · {account.priorityBand}</p>
                 <p className="mt-2 text-5xl font-black tabular-nums">{account.score.toFixed(1)}</p>
               </div>
               <span className={`confidence-pill confidence-${organization.confidence}`}>{organization.confidence} confidence</span>
             </div>
             <p className="mt-5 border-t border-white/10 pt-5 text-sm leading-6 text-white/70">{account.reason}</p>
           </section>
+
+          {recommendation && <section className="agent-recommendation" aria-labelledby="recommendation-heading">
+            <div className="flex items-start justify-between gap-4"><div className="flex items-center gap-3"><span className="metric-icon"><Bot size={17} /></span><div><h3 id="recommendation-heading" className="section-title">Recommended next action</h3><p className="mt-1 text-xs text-muted">{recommendationSource === "ai" ? "AI interpreted · policy checked" : "Deterministic action plan"}</p></div></div><span className={`action-pill action-${recommendation.recommended_action}`}>{recommendation.recommended_action.replaceAll("_", " ")}</span></div>
+            <dl className="mt-5 space-y-4 text-sm"><div><dt className="font-extrabold text-ink">Why now</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.why_now}</dd></div><div><dt className="font-extrabold text-ink">Call angle</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.call_angle}</dd></div></dl>
+            <p className="mt-4 text-xs capitalize text-muted">Urgency: {recommendation.urgency} · Agent confidence: {recommendation.confidence}</p>
+          </section>}
 
           <section aria-labelledby="factor-heading">
             <h3 id="factor-heading" className="section-title">Factor breakdown</h3>
@@ -66,6 +74,10 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
                 ["Account tier", organization.accountTier ?? "Not available"],
                 ["ARR proxy", formatCurrency(organization.arr)],
                 ["Last contact", organization.lastContactDate ?? "Not available"],
+                ["Account score", account.accountScore?.toFixed(1) ?? "Unknown"],
+                ["Intent score", account.intentScore.toFixed(1)],
+                ["Data status", organization.validationStatus],
+                ["Contact suppression", organization.contactSuppressed === undefined ? "Not provided" : organization.contactSuppressed ? "Suppressed" : "Clear"],
                 ["Signals", String(organization.engagements.length)],
               ].map(([label, value]) => (
                 <div key={label} className="bg-white p-4"><dt className="text-xs font-bold uppercase tracking-[0.08em] text-muted">{label}</dt><dd className="mt-2 text-sm font-extrabold text-ink">{value}</dd></div>
@@ -86,7 +98,7 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
                     <div className="timeline-dot" />
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-ink">{EVENT_LABELS[engagement.eventType]}</p>
-                      <p className="mt-1 text-sm text-muted">{engagement.eventCount} events · {engagement.eventDate}</p>
+                      <p className="mt-1 text-sm text-muted">{engagement.eventCount} events · {engagement.eventDate}{engagement.validationStatus === "blocked" || engagement.eventDate > account.asOfDate ? " · not scored" : ""}</p>
                     </div>
                   </li>
                 ))}
@@ -98,10 +110,10 @@ export function AccountDrawer({ account, onClose }: { account?: RankedAccount; o
             <section aria-labelledby="aliases-heading"><h3 id="aliases-heading" className="section-title">Merged CRM aliases</h3><div className="mt-3 flex flex-wrap gap-2">{organization.aliases.map((alias) => <span className="alias-chip" key={alias}>{alias}</span>)}</div></section>
           )}
 
-          {organization.issues.length > 0 && (
+          {warnings.length > 0 && (
             <section aria-labelledby="warning-heading">
               <h3 id="warning-heading" className="section-title">Data warnings</h3>
-              <ul className="mt-4 space-y-3">{organization.issues.map((item) => <li className="issue-card" key={item.id}><AlertTriangle size={16} className="mt-0.5 shrink-0 text-brand" /><div><p className="text-sm font-bold text-ink">{item.message}</p><p className="mt-1 text-xs leading-5 text-muted">{item.recommendedAction}</p></div></li>)}</ul>
+              <ul className="mt-4 space-y-3">{warnings.map((item) => <li className="issue-card" key={item.id}><AlertTriangle size={16} className="mt-0.5 shrink-0 text-brand" /><div><p className="text-sm font-bold text-ink">{item.message}</p><p className="mt-1 text-xs leading-5 text-muted">{item.recommendedAction}</p></div></li>)}</ul>
             </section>
           )}
 
