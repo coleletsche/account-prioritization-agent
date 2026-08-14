@@ -1,0 +1,7 @@
+.env*
+node_modules
+.next
+playwright-report
+test-results
+coverage
+output
