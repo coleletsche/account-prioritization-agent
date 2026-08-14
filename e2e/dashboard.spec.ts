@@ -27,10 +27,6 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await expect(page.getByText("2026-07-28", { exact: true })).toBeVisible();
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
 
-  await page.getByRole("tab", { name: "Rep A", exact: true }).click();
-  await expect(page.getByText("Rep A’s call list", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(10);
-
   const defaultOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
   await page.getByLabel("Intent weight").fill("0");
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("0%");
@@ -40,6 +36,18 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await page.getByLabel("Reset score weights").click();
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("55%");
   await expect(page.getByLabel("Reset score weights")).toBeDisabled();
+
+  await page.getByLabel("Select persona").selectOption("Rep A");
+  await expect(page.getByText("Rep A’s call list", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(10);
+  await expect(page.getByLabel("Published scoring strategy")).toContainText("Intent55%");
+  await expect(page.getByLabel("Intent weight")).toHaveCount(0);
+  await expect(page.getByLabel("Reset score weights")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Generate briefing", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Refresh data", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Review issues", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Export full ranking", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Prioritization week")).toBeDisabled();
 
   await page.getByTestId("ranking-table").locator("tbody tr").first().getByRole("button").first().click();
   await expect(page.getByRole("dialog").getByText("Factor breakdown", { exact: true })).toBeVisible();
@@ -132,6 +140,7 @@ test("supports keyboard dismissal and a 390px mobile viewport without page overf
   await page.setViewportSize({ width: 390, height: 844 });
   await openDashboard(page);
   await expect(page.getByAltText("Velora")).toBeVisible();
+  await expect(page.getByLabel("Select persona")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   await page.getByRole("button", { name: "Review issues", exact: true }).focus();

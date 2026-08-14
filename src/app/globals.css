@@ -77,6 +77,36 @@ select:focus-visible {
   padding: 7px 12px;
 }
 
+.persona-switcher {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(229, 90, 127, 0.28);
+  border-radius: 10px;
+  background: #fff5f8;
+  padding: 0 8px 0 11px;
+  color: #a9264e;
+}
+
+.persona-switcher > span {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.persona-switcher select {
+  min-width: 96px;
+  border: 0;
+  background: transparent;
+  color: #0e0d0d;
+  font-size: 0.8125rem;
+  font-weight: 900;
+  outline: 0;
+}
+
 .button-primary,
 .button-secondary {
   display: inline-flex;
@@ -201,6 +231,16 @@ select:focus-visible {
   font-weight: 800;
 }
 
+.date-control-locked {
+  background: #fafafa;
+}
+
+.date-control input:disabled {
+  cursor: not-allowed;
+  color: #606060;
+  opacity: 0.72;
+}
+
 .stale-banner {
   display: flex;
   align-items: flex-start;
@@ -256,22 +296,45 @@ select:focus-visible {
   color: #d9416c;
 }
 
-.view-tab {
-  flex: 0 0 auto;
-  border-bottom: 2px solid transparent;
-  padding: 10px 12px 12px;
+.rep-access-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(229, 90, 127, 0.2);
+  border-radius: 18px;
+  background: white;
+  padding: 12px 16px;
+  box-shadow: 0 12px 34px rgba(33, 31, 84, 0.05);
+}
+
+.published-strategy-card {
+  border: 1px solid rgba(229, 90, 127, 0.22);
+  border-radius: 20px;
+  background: white;
+  padding: 22px;
+  box-shadow: 0 14px 40px rgba(33, 31, 84, 0.055);
+}
+
+.published-weight {
+  border-radius: 12px;
+  background: #fff5f8;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.published-weight dt {
   color: #797979;
-  font-size: 0.8125rem;
+  font-size: 0.625rem;
   font-weight: 800;
+  text-transform: uppercase;
 }
 
-.view-tab:hover {
+.published-weight dd {
+  margin-top: 3px;
   color: #0e0d0d;
-}
-
-.view-tab-active {
-  border-bottom-color: #e55a7f;
-  color: #0e0d0d;
+  font-size: 0.9375rem;
+  font-weight: 900;
 }
 
 .search-field,
@@ -878,6 +941,19 @@ select:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .persona-switcher > span {
+    display: none;
+  }
+
+  .persona-switcher select {
+    min-width: 88px;
+  }
+
+  .rep-access-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .date-control {
     align-items: flex-start;
     flex-direction: column;
