@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { FileJson2, FileSpreadsheet, ShieldCheck, Sparkles, Upload, X } from "lucide-react";
-import { DataImportError, processCrmExports, type EntityResolutionResult } from "@/lib/data";
+import { DataImportError } from "@/lib/data";
+import { createDatasetSession, type DatasetSession } from "@/lib/reconciliation";
 import { useEscape } from "./use-escape";
 
 type SourceFile = { name: string; read: () => Promise<string> };
 export type AnalysisOptions = { generateAllPlans: boolean };
 
 export interface DataIntakeProps {
-  onAnalyze: (data: EntityResolutionResult, label: string, options: AnalysisOptions) => Promise<void> | void;
+  onAnalyze: (session: DatasetSession, label: string, options: AnalysisOptions) => Promise<void> | void;
   onValidatingChange?: (validating: boolean) => void;
   busy?: boolean;
   compact?: boolean;
@@ -57,7 +58,7 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
     onValidatingChange?.(true);
     try {
       const [accounts, signals] = await Promise.all([accountsSource.read(), signalsSource.read()]);
-      await onAnalyze(processCrmExports(accounts, signals), `${accountsSource.name} + ${signalsSource.name}`, { generateAllPlans });
+      await onAnalyze(createDatasetSession({ accountsCsv: accounts, engagementsJson: signals }), `${accountsSource.name} + ${signalsSource.name}`, { generateAllPlans });
     } catch (cause) {
       const message = cause instanceof DataImportError
         ? `${cause.message} ${cause.issues.map((issue) => issue.evidence).join(" ")}`
@@ -114,7 +115,7 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
   );
 }
 
-export function UploadDialog({ open, onClose, onAnalyze, busy = false }: { open: boolean; onClose: () => void; onAnalyze: (data: EntityResolutionResult, label: string, options: AnalysisOptions) => Promise<void> | void; busy?: boolean }) {
+export function UploadDialog({ open, onClose, onAnalyze, busy = false }: { open: boolean; onClose: () => void; onAnalyze: (session: DatasetSession, label: string, options: AnalysisOptions) => Promise<void> | void; busy?: boolean }) {
   useEscape(open && !busy, onClose);
   if (!open) return null;
 

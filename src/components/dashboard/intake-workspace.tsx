@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Bot, Check, Circle, DatabaseZap, ListChecks, LoaderCircle, ShieldCheck } from "lucide-react";
-import type { EntityResolutionResult } from "@/lib/data";
+import type { DatasetSession } from "@/lib/reconciliation";
 import { DataIntake, type AnalysisOptions } from "./upload-dialog";
 
 export type WorkspacePhase = "input" | "validating" | "analyzing" | "dashboard";
@@ -20,7 +20,7 @@ function BrandHeader() {
   return <header className="border-b border-line bg-white/95"><div className="page-shell flex min-h-[80px] items-center justify-between py-3"><Image src="/brand/velora-logo.svg" alt="Velora" width={192} height={30} preload className="h-auto w-[170px]" /><span className="status-pill hidden sm:inline-flex"><ShieldCheck size={14} /> Session only</span></div></header>;
 }
 
-export function IntakeWorkspace({ phase, stage, generatePlans, onAnalyze, onValidatingChange }: { phase: Exclude<WorkspacePhase, "dashboard">; stage: AnalysisStage; generatePlans: boolean; onAnalyze: (data: EntityResolutionResult, label: string, options: AnalysisOptions) => Promise<void>; onValidatingChange: (validating: boolean) => void }) {
+export function IntakeWorkspace({ phase, stage, generatePlans, onAnalyze, onValidatingChange }: { phase: Exclude<WorkspacePhase, "dashboard">; stage: AnalysisStage; generatePlans: boolean; onAnalyze: (session: DatasetSession, label: string, options: AnalysisOptions) => Promise<void>; onValidatingChange: (validating: boolean) => void }) {
   const analyzing = phase === "analyzing";
   const activeStep = stageIndex(stage);
   return (

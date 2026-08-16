@@ -31,12 +31,15 @@ function selectCanonical(records: AccountRecord[]): AccountRecord {
 }
 
 function buildOrganization(key: string, records: AccountRecord[]): ResolvedOrganization {
+  const organizationId = stableId("org", key);
   const primary = selectCanonical(records);
   const conflicts = fieldsConflict(records);
   const issues = records.flatMap((record) => record.issues);
   if (conflicts.length > 0) {
     issues.push(resolutionIssue({
       category: conflicts.includes("owner") ? "owner" : "identity", severity: "high", entityName: primary.accountName,
+      organizationId, relatedRowNumbers: records.map((record) => record.rowNumber),
+      fieldNames: conflicts.map((field) => field === "contact suppression" ? "do_not_contact" : field === "tier" ? "account_tier" : field),
       message: "Potential duplicate records disagree on important CRM fields.",
       evidence: `Conflicting fields: ${conflicts.join(", ")}`,
       recommendedAction: "Review the CRM records and select the canonical organization values.", excludesFromRanking: true,
@@ -53,7 +56,7 @@ function buildOrganization(key: string, records: AccountRecord[]): ResolvedOrgan
   const suppressionValues = records.map((record) => record.contactSuppressed).filter((value): value is boolean => value !== undefined);
 
   return {
-    id: stableId("org", key),
+    id: organizationId,
     accountIds,
     canonicalName: primary.accountName,
     aliases,
@@ -151,6 +154,7 @@ export function resolveOrganizations(accounts: AccountRecord[], engagements: Eng
       engagement.duplicateOfRowNumber = first.rowNumber;
       resolutionIssues.push(resolutionIssue({
         category: "engagement", severity: "medium", rowNumber: engagement.rowNumber, entityName: organization.canonicalName,
+        organizationId: organization.id, relatedRowNumbers: [engagement.rowNumber],
         message: "Exact duplicate engagement is excluded from intent scoring.",
         evidence: `${engagement.eventType} on ${engagement.eventDate} with count ${engagement.eventCount}; duplicates row ${first.rowNumber}`,
         recommendedAction: "Remove the duplicate event at its source or confirm that the rows represent distinct activity.", excludesFromRanking: false,

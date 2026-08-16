@@ -25,6 +25,9 @@ export interface DataQualityIssue {
   source: "accounts" | "engagement" | "resolution";
   rowNumber?: number;
   entityName?: string;
+  organizationId?: string;
+  relatedRowNumbers?: number[];
+  fieldNames?: string[];
   message: string;
   evidence: string;
   recommendedAction: string;

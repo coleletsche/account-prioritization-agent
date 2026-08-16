@@ -43,7 +43,7 @@ describe("DataIntake", () => {
     fireEvent.click(screen.getByRole("button", { name: "Analyze account book" }));
 
     await waitFor(() => expect(onAnalyze).toHaveBeenCalledOnce());
-    expect(onAnalyze.mock.calls[0][0].statistics).toMatchObject({ sourceAccountRows: 1, sourceSignalRows: 1, resolvedOrganizations: 1, matchedSignals: 1 });
+    expect(onAnalyze.mock.calls[0][0].data.statistics).toMatchObject({ sourceAccountRows: 1, sourceSignalRows: 1, resolvedOrganizations: 1, matchedSignals: 1 });
     expect(onAnalyze.mock.calls[0][1]).toBe("accounts.csv + signals.json");
     expect(onAnalyze.mock.calls[0][2]).toEqual({ generateAllPlans: false });
   });

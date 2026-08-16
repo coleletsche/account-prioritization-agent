@@ -12,7 +12,8 @@ A desktop-first Next.js application that validates CRM account and engagement ex
 - Open an account to inspect score factors, exact inputs, engagement history, aliases, and warnings.
 - Change the three scoring weights while preserving a 100% total, then reset to defaults.
 - Validate two replacement exports before atomically applying them in browser memory.
-- Inspect every data-quality flag and download the full reproducible ranking.
+- Reconcile account, engagement, identity, conflict, and duplicate warnings against a browser-only working copy, then rescore the complete cohort.
+- Download corrected account CSV and engagement JSON exports alongside the full reproducible ranking.
 - Optionally generate every AI outreach plan at intake, generate the full book later, or generate one account at a time.
 - Keep ungenerated and failed plans visibly empty instead of presenting deterministic copy as AI interpretation.
 
@@ -45,7 +46,7 @@ npx playwright install chromium
 npm run verify
 ```
 
-`npm run verify` runs ESLint, 57 Vitest unit/component tests, a production build, and five Playwright workflows covering first-run intake, on-demand and optional bulk AI plans, the complete account book, personas, reranking, review, replacement uploads, CSV export, partial coverage, and the 390px mobile layout.
+`npm run verify` runs ESLint, 69 Vitest unit/component tests, a production build, and six Playwright workflows covering first-run intake, on-demand and optional bulk AI plans, the complete account book, personas, reranking, source-backed reconciliation, replacement uploads, corrected exports, partial coverage, and the 390px mobile layout.
 
 Individual commands:
 
@@ -83,7 +84,9 @@ Expected bundled baseline: 300 account rows, 360 engagement rows, 286 resolved o
 
 ## Session refresh and privacy
 
-Select one CSV and one JSON file, then click **Analyze account book**. Validation, resolution, and deterministic scoring run before the dashboard opens. The optional intake checkbox also generates all AI outreach plans; otherwise use a row action or **Generate all plans** later. Files and results remain in browser memory, and refresh returns to intake. Replacement imports do not change the active ranking unless the new pair validates successfully. The full-ranking export includes plan fields only for accounts whose AI plan was generated.
+Select one CSV and one JSON file, then click **Analyze account book**. Validation, resolution, and deterministic scoring run before the dashboard opens. The optional intake checkbox also generates all AI outreach plans; otherwise use a row action or **Generate all plans** later. Files and results remain in browser memory, and refresh returns to intake. Replacement imports do not change the active ranking unless the new pair validates successfully.
+
+The VP can open **Data tools → Reconcile data** to edit the source row behind a warning. **Save & rescore** regenerates the working exports, reruns validation and entity resolution, and recomputes the entire cohort. Warnings leave the queue only when the corrected values pass validation. AI plans are retained only when their complete model-facing inputs remain unchanged. **Accounts CSV** and **Engagement JSON** download the corrected working copies; they never overwrite the user’s local files. The full-ranking export includes plan fields only for accounts whose AI plan was generated.
 
 The recommendation route rejects free-form prompts, more than 400 accounts, bodies over 2 MB, mismatched account IDs, and invalid schemas. Each model batch has a 20-second timeout, and the route has best-effort per-IP throttling. The API identifies exactly which accounts received model output; failed batches stay visibly ungenerated and can be retried. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
 
@@ -102,6 +105,7 @@ Before enabling AI on a public deployment, set an OpenAI project spend cap. Then
 - `src/lib/data/` — validation, normalization, and entity resolution
 - `src/lib/scoring.ts` — pure deterministic scoring
 - `src/lib/quality.ts` — as-of-date quality checks
+- `src/lib/reconciliation.ts` — session source editing, correction validation, regrouping, and reprocessing
 - `src/lib/export.ts` — safe full-ranking CSV generation
 - `src/lib/agent/contracts.ts` — bounded validated facts and structured output schemas
 - `src/lib/agent/policy.ts` — deterministic fallback actions and authoritative blocking rules

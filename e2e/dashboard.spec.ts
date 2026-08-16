@@ -145,8 +145,8 @@ test("keeps failed replacements atomic and analyzes a valid replacement", async 
 test("exposes held-out records and exports every ranked account", async ({ page }) => {
   await openDashboard(page);
   await page.getByRole("button", { name: /Data tools/i }).click();
-  await page.getByRole("button", { name: /Review issues/i }).click();
-  await expect(page.getByText("Review queue", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Reconcile data/i }).click();
+  await expect(page.getByText("Data reconciliation", { exact: true })).toBeVisible();
   await expect(page.getByText("Held out", { exact: true }).first()).toBeVisible();
   await page.keyboard.press("Escape");
 
@@ -192,6 +192,27 @@ test("supports optional bulk generation, partial coverage, and retry without rer
   expect(await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText()).toBe(leader);
 });
 
+test("corrects a held-out source record, rescoring it into the ranking, and downloads the working export", async ({ page }) => {
+  await openDashboard(page);
+  await page.getByRole("button", { name: /Data tools/i }).click();
+  await page.getByRole("button", { name: /Reconcile data/i }).click();
+  await expect(page.getByRole("heading", { name: "Data reconciliation" })).toBeVisible();
+  await expect(page.getByText("+1-202-555-0147", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Account name").fill("TechSoup");
+  await page.getByRole("button", { name: "Save & rescore" }).click();
+  await expect(page.getByRole("status")).toContainText("Warnings 139 → 138");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Accounts CSV" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("velora-corrected-accounts.csv");
+  const correctedPath = await download.path();
+  expect(await readFile(correctedPath as string, "utf8")).toContain("TechSoup");
+
+  await page.getByRole("button", { name: "Close data reconciliation" }).click();
+  await expect(page.getByText("Showing 1–25 of 286 eligible accounts", { exact: true })).toBeVisible();
+});
+
 test("supports the complete intake and ranking flow at 390px without page overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockAgent(page);
@@ -203,8 +224,8 @@ test("supports the complete intake and ranking flow at 390px without page overfl
   await expect(page.getByRole("heading", { name: "Account ranking", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole("button", { name: /Data tools/i }).click();
-  await page.getByRole("button", { name: /Review issues/i }).click();
-  await expect(page.getByText("Review queue", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Reconcile data/i }).click();
+  await expect(page.getByText("Data reconciliation", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

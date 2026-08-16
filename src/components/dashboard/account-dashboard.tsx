@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, Bot, CalendarDays, Database, Download, Info, ListChecks, LoaderCircle, LockKeyhole, RefreshCw, Search, SlidersHorizontal, Sparkles, UserRoundCheck, X } from "lucide-react";
-import { buildSalesAgentRequest, deterministicRecommendations, SalesAgentApiResponseSchema, type AccountRecommendation, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
-import type { EntityResolutionResult, RankedAccount, ScoreWeights } from "@/lib/data";
+import { buildSalesAgentRequest, deterministicRecommendations, preserveCompatiblePlans, SalesAgentApiResponseSchema, type AccountRecommendation, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
+import type { RankedAccount, ScoreWeights } from "@/lib/data";
 import { buildRankingCsv, rankingFilename } from "@/lib/export";
 import { getEffectiveReviewQueue } from "@/lib/quality";
+import { applyReconciliationAction, resetDatasetSession, type DatasetSession, type ReconciliationAction } from "@/lib/reconciliation";
 import { DEFAULT_WEIGHTS, daysBetween, rankOrganizations } from "@/lib/scoring";
 import { AccountDrawer } from "./account-drawer";
 import { IntakeWorkspace, type AnalysisStage, type WorkspacePhase } from "./intake-workspace";
@@ -79,11 +80,20 @@ function allowPaint(): Promise<void> {
   });
 }
 
+function downloadTextFile(contents: string, filename: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([contents], { type }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AccountDashboard() {
   const [phase, setPhase] = useState<WorkspacePhase>("input");
   const [analysisStage, setAnalysisStage] = useState<AnalysisStage>("scoring");
   const [analysisIncludesAi, setAnalysisIncludesAi] = useState(false);
-  const [data, setData] = useState<EntityResolutionResult>();
+  const [session, setSession] = useState<DatasetSession>();
   const [weights, setWeights] = useState<ScoreWeights>({ ...DEFAULT_WEIGHTS });
   const [asOfDate, setAsOfDate] = useState(DEFAULT_WEEK);
   const [persona, setPersona] = useState("vp");
@@ -102,7 +112,7 @@ export function AccountDashboard() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [utilityPanel, setUtilityPanel] = useState<UtilityPanel>();
   const [datasetLabel, setDatasetLabel] = useState("");
-  const [agentResult, setAgentResult] = useState<{ scopeKey: string; response: SalesAgentApiResponse }>();
+  const [agentResult, setAgentResult] = useState<{ scopeKey: string; request: SalesAgentRequest; response: SalesAgentApiResponse }>();
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(() => new Set());
   const [generationErrors, setGenerationErrors] = useState<Map<string, string>>(() => new Map());
   const [bulkGenerating, setBulkGenerating] = useState(false);
@@ -110,6 +120,7 @@ export function AccountDashboard() {
   useEscape(methodologyOpen, () => setMethodologyOpen(false));
   useEscape(Boolean(utilityPanel), () => setUtilityPanel(undefined));
 
+  const data = session?.data;
   const ranked = useMemo(() => data ? rankOrganizations(data.organizations, { asOfDate, weights }) : [], [data, asOfDate, weights]);
   const owners = useMemo(() => [...new Set(ranked.map((account) => account.organization.owner as string))].sort(), [ranked]);
   const tiers = useMemo(() => [...new Set(ranked.map((account) => account.organization.accountTier).filter(Boolean) as string[])].sort(), [ranked]);
@@ -176,7 +187,7 @@ export function AccountDashboard() {
 
   const returnToPreparation = () => {
     resetWorkspace();
-    setData(undefined);
+    setSession(undefined);
     setWeights({ ...DEFAULT_WEIGHTS });
     setAsOfDate(DEFAULT_WEEK);
     setAnalysisStage("scoring");
@@ -190,7 +201,8 @@ export function AccountDashboard() {
     setPhase("input");
   };
 
-  const prepareDataset = async (nextData: EntityResolutionResult, label: string, options: AnalysisOptions, replacement = false) => {
+  const prepareDataset = async (nextSession: DatasetSession, label: string, options: AnalysisOptions, replacement = false) => {
+    const nextData = nextSession.data;
     const nextRanked = rankOrganizations(nextData.organizations, { asOfDate, weights });
     if (nextRanked.length === 0) throw new Error("No eligible organizations with an owner were found. Review the export and try again.");
     const nextIssues = getEffectiveReviewQueue(nextData, asOfDate);
@@ -213,9 +225,9 @@ export function AccountDashboard() {
         setAnalysisStage("preparing");
         await allowPaint();
       }
-      setData(nextData);
+      setSession(nextSession);
       setDatasetLabel(label);
-      setAgentResult({ scopeKey: analysisScopeKey(asOfDate, weights, nextRanked), response });
+      setAgentResult({ scopeKey: analysisScopeKey(asOfDate, weights, nextRanked), request: nextRequest, response });
       resetWorkspace();
       setUploadOpen(false);
       setPhase("dashboard");
@@ -224,8 +236,8 @@ export function AccountDashboard() {
     }
   };
 
-  if (phase !== "dashboard" || !data) {
-    return <IntakeWorkspace phase={phase === "dashboard" ? "input" : phase} stage={analysisStage} generatePlans={analysisIncludesAi} onAnalyze={(nextData, label, options) => prepareDataset(nextData, label, options)} onValidatingChange={(validating) => setPhase(validating ? "validating" : "input")} />;
+  if (phase !== "dashboard" || !data || !session) {
+    return <IntakeWorkspace phase={phase === "dashboard" ? "input" : phase} stage={analysisStage} generatePlans={analysisIncludesAi} onAnalyze={(nextSession, label, options) => prepareDataset(nextSession, label, options)} onValidatingChange={(validating) => setPhase(validating ? "validating" : "input")} />;
   }
 
   const freshnessDays = data.latestEngagementDate ? daysBetween(data.latestEngagementDate, asOfDate) : undefined;
@@ -233,12 +245,56 @@ export function AccountDashboard() {
 
   const exportRanking = () => {
     const csv = buildRankingCsv(ranked, { asOfDate, weights, reviewIssues, recommendations });
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = rankingFilename(asOfDate);
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(csv, rankingFilename(asOfDate), "text/csv;charset=utf-8");
+  };
+
+  const organizationForAction = (candidateSession: DatasetSession, action: ReconciliationAction) => {
+    if (action.kind === "confirm_alias" || action.kind === "resolve_account_conflict") return candidateSession.data.organizations.find((organization) => organization.id === action.organizationId);
+    if (action.kind === "edit_account") return candidateSession.data.organizations.find((organization) => organization.sourceRows.includes(action.rowNumber));
+    return candidateSession.data.organizations.find((organization) => organization.engagements.some((engagement) => engagement.rowNumber === action.rowNumber));
+  };
+
+  const adoptReconciledSession = (nextSession: DatasetSession, action?: ReconciliationAction): string => {
+    const nextRanked = rankOrganizations(nextSession.data.organizations, { asOfDate, weights });
+    if (nextRanked.length === 0) throw new Error("That correction would leave no eligible organizations. The working account book was not changed.");
+    const nextIssues = getEffectiveReviewQueue(nextSession.data, asOfDate);
+    const nextRequest = buildSalesAgentRequest(nextRanked, { asOfDate, issues: nextIssues });
+    const nextScopeKey = analysisScopeKey(asOfDate, weights, nextRanked);
+    const currentAgentResult = agentResult?.scopeKey === agentScopeKey ? agentResult : undefined;
+    const nextAgentResponse = currentAgentResult
+      ? preserveCompatiblePlans(currentAgentResult.request, nextRequest, currentAgentResult.response)
+      : ungeneratedResponse(nextRequest, agentResult ? "The corrected ranking needs fresh AI plans." : undefined);
+    const previousOrganization = action ? organizationForAction(session, action) : undefined;
+    const nextOrganization = action
+      ? action.kind === "remove_engagement" && previousOrganization
+        ? nextSession.data.organizations.find((organization) => organization.id === previousOrganization.id)
+        : organizationForAction(nextSession, action) ?? (previousOrganization ? nextSession.data.organizations.find((organization) => organization.id === previousOrganization.id) : undefined)
+      : undefined;
+    const previousAccount = previousOrganization ? ranked.find((account) => account.organization.id === previousOrganization.id) : undefined;
+    const nextAccount = nextOrganization ? nextRanked.find((account) => account.organization.id === nextOrganization.id) : undefined;
+
+    setSession(nextSession);
+    setAgentResult({ scopeKey: nextScopeKey, request: nextRequest, response: nextAgentResponse });
+    setGenerationErrors(new Map());
+    setGeneratingIds(new Set());
+    setBulkGenerating(false);
+    setPage(1);
+    if (selectedId && !nextRanked.some((account) => account.organization.id === selectedId)) setSelectedId(undefined);
+
+    if (!action) return `Restored the uploaded exports. ${nextIssues.length} active warnings remain and the full account book was rescored.`;
+    const warningDelta = `Warnings ${reviewIssues.length} → ${nextIssues.length}.`;
+    if (!previousAccount && nextAccount) return `${warningDelta} ${nextAccount.organization.canonicalName} entered the ranking at #${nextAccount.rank} with a ${nextAccount.priorityScore.toFixed(1)} score.`;
+    if (previousAccount && nextAccount) return `${warningDelta} ${nextAccount.organization.canonicalName}: rank #${previousAccount.rank} → #${nextAccount.rank}, score ${previousAccount.priorityScore.toFixed(1)} → ${nextAccount.priorityScore.toFixed(1)}.`;
+    return `${warningDelta} The complete account book was revalidated and rescored.`;
+  };
+
+  const applyCorrection = (action: ReconciliationAction): string => adoptReconciledSession(applyReconciliationAction(session, action), action);
+
+  const resetCorrections = (): string => adoptReconciledSession(resetDatasetSession(session));
+
+  const downloadCorrectedSource = (source: "accounts" | "engagement") => {
+    if (source === "accounts") downloadTextFile(session.workingSources.accountsCsv, "velora-corrected-accounts.csv", "text/csv;charset=utf-8");
+    else downloadTextFile(session.workingSources.engagementsJson, "velora-corrected-engagement-signals.json", "application/json;charset=utf-8");
   };
 
   const changePersona = (nextPersona: string) => {
@@ -271,6 +327,7 @@ export function AccountDashboard() {
       const generated = response.generated_account_ids.includes(accountId);
       setAgentResult((current) => ({
         scopeKey: agentScopeKey,
+        request: agentRequest,
         response: mergeGeneratedResponses(agentRequest, current?.scopeKey === agentScopeKey ? current.response : undefined, response),
       }));
       if (!generated) {
@@ -296,6 +353,7 @@ export function AccountDashboard() {
       const response = await interpretAccountBook({ as_of_date: agentRequest.as_of_date, accounts: remainingAccounts });
       setAgentResult((current) => ({
         scopeKey: agentScopeKey,
+        request: agentRequest,
         response: mergeGeneratedResponses(agentRequest, current?.scopeKey === agentScopeKey ? current.response : undefined, response),
       }));
     } finally {
@@ -339,13 +397,13 @@ export function AccountDashboard() {
       </div>
 
       <AccountDrawer account={selected} recommendation={selectedRecommendation} generating={selected ? generatingIds.has(selected.organization.id) : false} generationError={selected ? generationErrors.get(selected.organization.id) : undefined} issues={selectedIssues} onGenerate={generateAccountPlan} onClose={() => setSelectedId(undefined)} />
-      {uploadOpen && <UploadDialog open busy={replacementBusy} onClose={() => setUploadOpen(false)} onAnalyze={(nextData, label, options) => prepareDataset(nextData, label, options, true)} />}
-      {reviewOpen && <ReviewQueue open issues={reviewIssues} onClose={() => setReviewOpen(false)} />}
+      {uploadOpen && <UploadDialog open busy={replacementBusy} onClose={() => setUploadOpen(false)} onAnalyze={(nextSession, label, options) => prepareDataset(nextSession, label, options, true)} />}
+      {reviewOpen && <ReviewQueue open session={session} issues={reviewIssues} ranked={ranked} onApply={applyCorrection} onReset={resetCorrections} onDownload={downloadCorrectedSource} onClose={() => setReviewOpen(false)} />}
 
       {utilityPanel && <div className="fixed inset-0 z-50 flex justify-end"><button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[1px]" onClick={() => setUtilityPanel(undefined)} aria-label="Dismiss workspace tools" /><aside className="utility-drawer relative h-full w-full overflow-y-auto bg-white shadow-2xl sm:max-w-[430px]" role="dialog" aria-modal="true" aria-labelledby="utility-title"><div className="utility-drawer-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-5 py-5 backdrop-blur sm:px-7"><div><p className="eyebrow">{utilityPanel === "scoring" ? "Ranking strategy" : utilityPanel === "agent" ? "Sales agent" : "CRM workspace"}</p><h2 id="utility-title" className="mt-1.5 text-2xl font-black tracking-[-0.035em] text-ink">{utilityPanel === "scoring" ? (isVp ? "Scoring controls" : "Published scoring") : utilityPanel === "agent" ? "AI plan status" : "Data tools"}</h2></div><button type="button" className="icon-button" onClick={() => setUtilityPanel(undefined)} aria-label="Close workspace tools"><X size={18} /></button></div><div className="space-y-5 p-5 sm:p-7">
         {utilityPanel === "scoring" && (isVp ? <WeightControls weights={weights} onChange={(nextWeights) => { setWeights(nextWeights); setGenerationErrors(new Map()); }} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your ranking uses the VP’s active strategy. Reps can inspect these weights but cannot change them.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>)}
         {utilityPanel === "agent" && <RecommendationPanel result={activeAgentResponse} totalAccounts={ranked.length} bulkLoading={bulkGenerating} canGenerateAll={isVp} onGenerateAll={generateRemainingPlans} />}
-        {utilityPanel === "data" && <section className="data-tools-card" aria-label="Data actions"><div className="flex items-start gap-3"><span className="metric-icon"><Database size={18} /></span><div className="min-w-0"><p className="font-extrabold text-ink">{datasetLabel}</p><p className="mt-1 text-xs leading-5 text-muted">{data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows · latest engagement {data.latestEngagementDate ?? "unknown"}</p></div></div><p className="mt-5 rounded-[14px] bg-blush/60 p-3 text-xs leading-5 text-muted">Uploaded exports stay in browser memory for this session. Raw files are never persisted.</p><div className="mt-5 grid gap-2"><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setUploadOpen(true); }}><RefreshCw size={16} /> Replace account book</button><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setReviewOpen(true); }}><ListChecks size={16} /> Review issues <span className="button-count">{reviewIssues.length}</span></button><button type="button" className="button-primary w-full" aria-label="Export full ranking" onClick={exportRanking}><Download size={16} /> Export full ranking</button></div></section>}
+        {utilityPanel === "data" && <section className="data-tools-card" aria-label="Data actions"><div className="flex items-start gap-3"><span className="metric-icon"><Database size={18} /></span><div className="min-w-0"><p className="font-extrabold text-ink">{datasetLabel}</p><p className="mt-1 text-xs leading-5 text-muted">{data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows · {session.corrections.length} session {session.corrections.length === 1 ? "change" : "changes"}</p></div></div><p className="mt-5 rounded-[14px] bg-blush/60 p-3 text-xs leading-5 text-muted">Corrections update a browser-only working copy, then rerun deterministic validation and scoring. Download the corrected exports to carry changes back to the CRM.</p><div className="mt-5 grid gap-2"><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setUploadOpen(true); }}><RefreshCw size={16} /> Replace account book</button><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setReviewOpen(true); }}><ListChecks size={16} /> Reconcile data <span className="button-count">{reviewIssues.length}</span></button><button type="button" className="button-primary w-full" aria-label="Export full ranking" onClick={exportRanking}><Download size={16} /> Export full ranking</button></div></section>}
         <section className="utility-note"><div className="flex items-center gap-3"><span className="metric-icon"><Info size={17} /></span><p className="font-extrabold text-ink">Deterministic ranking</p></div><p className="mt-3 text-sm leading-6 text-muted">The score is a relative ordering, not a conversion prediction. AI can interpret the fixed ranking but cannot change rank or policy.</p><button type="button" className="text-link mt-4" onClick={() => { setUtilityPanel(undefined); setMethodologyOpen(true); }}>See the full methodology</button></section>
       </div></aside></div>}
 

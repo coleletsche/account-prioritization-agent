@@ -20,7 +20,7 @@ Intent is event weight × `ln(1 + count)` × 30-day half-life with a small cappe
 
 Inputs are Zod validated and labeled `valid`, `warning`, or `blocked`. Required-schema failures reject refresh atomically; missing ARR/contact, negative or suspicious ARR, future dates, unknown events, invalid suppression, contradictory records, and exact duplicate events remain visible. Resolution prefers exact CRM ID, domain, name, then confirmed/deterministic alias. Ambiguous matches are never guessed. Duplicate events are preserved as evidence but the duplicate copy is explicitly blocked from scoring.
 
-Confidence is separate from score: high has no warnings, medium has usable warnings, and low is held from ranking. Deterministic policy forces `needs_data_review` for critical data or unresolved identity and `no_action` for explicit suppression, even after model output. The separate review queue shows category, severity, row evidence, and a suggested CRM correction.
+Confidence is separate from score: high has no warnings, medium has usable warnings, and low is held from ranking. Deterministic policy forces `needs_data_review` for critical data or unresolved identity and `no_action` for explicit suppression, even after model output. The VP-only reconciliation workspace groups warnings by source record, allows explicit corrections and identity decisions, and reruns the complete deterministic pipeline. Warnings cannot be dismissed; they resolve only when revalidation passes. Corrected CSV/JSON exports can be downloaded, but no CRM writeback or persistence is added.
 
 ## Definition of success
 
