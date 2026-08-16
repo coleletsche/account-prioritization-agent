@@ -490,6 +490,46 @@ select:focus-visible {
   background: #fffafb;
 }
 
+.ranking-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  border-top: 1px solid #ededed;
+  padding: 16px 28px;
+  color: #606060;
+  font-size: 0.75rem;
+}
+
+.ranking-pagination button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  background: white;
+  padding: 0 11px;
+  color: #343333;
+  font-weight: 800;
+}
+
+.ranking-pagination button:not(:disabled):hover {
+  border-color: rgba(229, 90, 127, 0.35);
+  background: #fff5f8;
+  color: #a9264e;
+}
+
+.ranking-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.ranking-pagination strong {
+  color: #0e0d0d;
+}
+
 .rank-number {
   display: inline-flex;
   width: 30px;
@@ -1469,6 +1509,11 @@ select:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .ranking-pagination {
+    justify-content: space-between;
+    padding-inline: 20px;
+  }
+
   .intake-primary-card,
   .analysis-card,
   .intake-trust-panel {

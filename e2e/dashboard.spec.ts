@@ -53,8 +53,13 @@ function watchRuntimeErrors(page: Page) {
 test("starts with intake, analyzes the full supplied account book, and preserves VP/rep permissions", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await openDashboard(page);
-  await expect(page.getByText("Showing 285 of 285 eligible accounts", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(285);
+  await expect(page.getByText("Showing 1–25 of 285 eligible accounts", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
+  await expect(page.getByRole("button", { name: "Previous page" })).toBeDisabled();
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.getByText("Showing 26–50 of 285 eligible accounts", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("ranking-table").locator("tbody tr").first().locator(".rank-number")).toHaveText("26");
+  await page.getByRole("button", { name: "Previous page" }).click();
   const firstRow = page.getByTestId("ranking-table").locator("tbody tr").first();
   await expect(firstRow.locator("td").nth(4)).not.toContainText(/immediate|high/i);
   expect(await firstRow.locator(".owner-chip").evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
@@ -71,7 +76,8 @@ test("starts with intake, analyzes the full supplied account book, and preserves
 
   await page.getByLabel("Select persona").selectOption("Rep A");
   await expect(page.getByRole("heading", { name: "Rep A’s account ranking", exact: true })).toBeVisible();
-  expect(await page.getByTestId("ranking-table").locator("tbody tr").count()).toBeGreaterThan(10);
+  await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
+  await expect(page.getByText(/Showing 1–25 of \d+ eligible accounts/)).toBeVisible();
   await page.getByRole("button", { name: "Published scoring", exact: true }).click();
   await expect(page.getByLabel("Published scoring strategy")).toContainText("Intent55%");
   await expect(page.getByLabel("Intent weight")).toHaveCount(0);
@@ -109,7 +115,7 @@ test("keeps failed replacements atomic and analyzes a valid replacement", async 
   await page.getByLabel("Engagement JSON file").setInputFiles(signalsPath);
   await page.getByRole("button", { name: "Analyze account book", exact: true }).click();
   await expect(page.getByText("accounts.csv + engagement_signals.json", { exact: true })).toBeVisible();
-  await expect(page.getByText("Showing 285 of 285 eligible accounts", { exact: true })).toBeVisible();
+  await expect(page.getByText("Showing 1–25 of 285 eligible accounts", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: /Data tools/i }).click();
   await page.getByRole("button", { name: "Replace account book", exact: true }).click();

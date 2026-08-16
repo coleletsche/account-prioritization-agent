@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, Bot, CalendarDays, Database, Download, Info, ListChecks, LockKeyhole, RefreshCw, Search, SlidersHorizontal, UserRoundCheck, X } from "lucide-react";
 import { buildSalesAgentRequest, deterministicRecommendations, SalesAgentApiResponseSchema, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
 import type { EntityResolutionResult, RankedAccount, ScoreWeights } from "@/lib/data";
@@ -11,6 +11,7 @@ import { DEFAULT_WEIGHTS, daysBetween, rankOrganizations } from "@/lib/scoring";
 import { AccountDrawer } from "./account-drawer";
 import { IntakeWorkspace, type AnalysisStage, type WorkspacePhase } from "./intake-workspace";
 import { RankingTable } from "./ranking-table";
+import { RANKING_PAGE_SIZE, RankingPagination } from "./ranking-pagination";
 import { RecommendationPanel } from "./recommendation-panel";
 import { ReviewQueue } from "./review-queue";
 import { UploadDialog } from "./upload-dialog";
@@ -68,6 +69,7 @@ export function AccountDashboard() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [industryFilter, setIndustryFilter] = useState("all");
   const [confidenceFilter, setConfidenceFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
@@ -77,6 +79,7 @@ export function AccountDashboard() {
   const [utilityPanel, setUtilityPanel] = useState<UtilityPanel>();
   const [datasetLabel, setDatasetLabel] = useState("");
   const [agentResult, setAgentResult] = useState<{ scopeKey: string; response: SalesAgentApiResponse }>();
+  const tableStartRef = useRef<HTMLDivElement>(null);
   useEscape(methodologyOpen, () => setMethodologyOpen(false));
   useEscape(Boolean(utilityPanel), () => setUtilityPanel(undefined));
 
@@ -111,7 +114,16 @@ export function AccountDashboard() {
     return candidates;
   }, [personaAccounts, isVp, ownerFilter, tierFilter, regionFilter, industryFilter, confidenceFilter, query]);
 
-  const filteredBookSize = isVp && ownerFilter !== "all" ? ranked.filter((account) => account.organization.owner === ownerFilter).length : personaAccounts.length;
+  const totalPages = Math.max(1, Math.ceil(visible.length / RANKING_PAGE_SIZE));
+  const activePage = Math.min(page, totalPages);
+  const pageStart = visible.length === 0 ? 0 : (activePage - 1) * RANKING_PAGE_SIZE + 1;
+  const pageEnd = Math.min(activePage * RANKING_PAGE_SIZE, visible.length);
+  const paginatedAccounts = visible.slice((activePage - 1) * RANKING_PAGE_SIZE, activePage * RANKING_PAGE_SIZE);
+
+  const changePage = (nextPage: number) => {
+    setPage(Math.min(totalPages, Math.max(1, nextPage)));
+    tableStartRef.current?.scrollIntoView({ block: "start" });
+  };
 
   const resetWorkspace = () => {
     setPersona("vp");
@@ -121,6 +133,7 @@ export function AccountDashboard() {
     setRegionFilter("all");
     setIndustryFilter("all");
     setConfidenceFilter("all");
+    setPage(1);
     setFiltersOpen(false);
     setSelectedId(undefined);
     setUtilityPanel(undefined);
@@ -185,6 +198,7 @@ export function AccountDashboard() {
     setRegionFilter("all");
     setIndustryFilter("all");
     setConfidenceFilter("all");
+    setPage(1);
     setFiltersOpen(false);
     setSelectedId(undefined);
     setUtilityPanel(undefined);
@@ -219,9 +233,10 @@ export function AccountDashboard() {
           {stale && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>Engagement data is stale.</strong><span> Latest signal is {freshnessDays} days old; confirm the export before acting.</span></div></div>}
           {futureEngagement && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>Future-dated engagement detected.</strong><span> Those signals are excluded and listed for review.</span></div></div>}
 
-          <div className="border-b border-line px-5 pt-5 sm:px-7"><div className="filter-bar pb-5"><label className="search-field"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => setQuery(event.target.value)} /></label><button type="button" className="button-compact filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={15} /> {filtersOpen ? "Hide filters" : "Filters"}</button>{isVp && <select aria-label="Filter by owner" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}><option value="all">All owners</option>{owners.map((owner) => <option key={owner}>{owner}</option>)}</select>}<select aria-label="Filter by tier" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={tierFilter} onChange={(event) => setTierFilter(event.target.value)}><option value="all">All tiers</option>{tiers.map((tier) => <option key={tier}>{tier}</option>)}</select><select aria-label="Filter by region" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={regionFilter} onChange={(event) => setRegionFilter(event.target.value)}><option value="all">All regions</option>{regions.map((region) => <option key={region}>{region}</option>)}</select><select aria-label="Filter by industry" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={industryFilter} onChange={(event) => setIndustryFilter(event.target.value)}><option value="all">All industries</option>{industries.map((industry) => <option key={industry}>{industry}</option>)}</select><select aria-label="Filter by confidence" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={confidenceFilter} onChange={(event) => setConfidenceFilter(event.target.value)}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select></div></div>
-          <div className="flex items-center justify-between gap-4 px-5 py-3.5 text-xs text-muted sm:px-7"><span>Showing {visible.length} of {filteredBookSize} eligible accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
-          <RankingTable accounts={visible} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
+          <div className="border-b border-line px-5 pt-5 sm:px-7"><div className="filter-bar pb-5"><label className="search-field"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label><button type="button" className="button-compact filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={15} /> {filtersOpen ? "Hide filters" : "Filters"}</button>{isVp && <select aria-label="Filter by owner" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={ownerFilter} onChange={(event) => { setOwnerFilter(event.target.value); setPage(1); }}><option value="all">All owners</option>{owners.map((owner) => <option key={owner}>{owner}</option>)}</select>}<select aria-label="Filter by tier" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={tierFilter} onChange={(event) => { setTierFilter(event.target.value); setPage(1); }}><option value="all">All tiers</option>{tiers.map((tier) => <option key={tier}>{tier}</option>)}</select><select aria-label="Filter by region" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={regionFilter} onChange={(event) => { setRegionFilter(event.target.value); setPage(1); }}><option value="all">All regions</option>{regions.map((region) => <option key={region}>{region}</option>)}</select><select aria-label="Filter by industry" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={industryFilter} onChange={(event) => { setIndustryFilter(event.target.value); setPage(1); }}><option value="all">All industries</option>{industries.map((industry) => <option key={industry}>{industry}</option>)}</select><select aria-label="Filter by confidence" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={confidenceFilter} onChange={(event) => { setConfidenceFilter(event.target.value); setPage(1); }}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select></div></div>
+          <div ref={tableStartRef} className="flex scroll-mt-24 items-center justify-between gap-4 px-5 py-3.5 text-xs text-muted sm:px-7"><span>Showing {pageStart}–{pageEnd} of {visible.length} eligible accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
+          <RankingTable accounts={paginatedAccounts} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
+          <RankingPagination page={activePage} totalItems={visible.length} onPageChange={changePage} />
         </section>
       </div>
 
