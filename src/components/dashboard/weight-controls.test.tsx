@@ -19,4 +19,14 @@ describe("WeightControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset score weights" }));
     expect(onChange).toHaveBeenCalledWith(DEFAULT_WEIGHTS);
   });
+
+  it("makes the deterministic intent assumptions visible to the VP", () => {
+    render(<WeightControls weights={DEFAULT_WEIGHTS} onChange={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "How signals map to intent" })).toBeInTheDocument();
+    expect(screen.getByText("Direct buying hand raise")).toBeInTheDocument();
+    expect(screen.getByText("10×")).toBeInTheDocument();
+    expect(screen.getByText(/not a model trained on conversion outcomes/i)).toBeInTheDocument();
+    expect(screen.getByText(/halves every 30 days/i)).toBeInTheDocument();
+    expect(screen.getByText(/Future-dated signals, exact duplicates/i)).toBeInTheDocument();
+  });
 });

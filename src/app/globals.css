@@ -655,6 +655,124 @@ select:focus-visible {
   box-shadow: 0 22px 52px rgba(14, 13, 13, 0.16);
 }
 
+.intent-rules-card {
+  border: 1px solid rgba(229, 90, 127, 0.24);
+  border-radius: 20px;
+  background: white;
+  padding: 22px;
+  box-shadow: 0 14px 40px rgba(33, 31, 84, 0.055);
+}
+
+.assumption-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #fff1ce;
+  padding: 6px 9px;
+  color: #734b07;
+  font-size: 0.625rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.intent-signal-list {
+  overflow: hidden;
+  border: 1px solid #ededed;
+  border-radius: 14px;
+}
+
+.intent-signal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 13px;
+}
+
+.intent-signal-row + .intent-signal-row {
+  border-top: 1px solid #ededed;
+}
+
+.intent-signal-row p {
+  color: #0e0d0d;
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.intent-signal-row span {
+  display: block;
+  margin-top: 2px;
+  color: #797979;
+  font-size: 0.6875rem;
+}
+
+.intent-signal-row strong {
+  min-width: 38px;
+  border-radius: 999px;
+  background: #fbe3ea;
+  padding: 6px 8px;
+  color: #a9264e;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.intent-formula {
+  border-radius: 14px;
+  background: #211f54;
+  padding: 14px;
+  color: white;
+}
+
+.intent-formula p {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.625rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.intent-formula code {
+  display: block;
+  margin-top: 7px;
+  color: white;
+  font-family: var(--font-body), Manrope, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.intent-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.intent-rule-grid > div {
+  border-radius: 12px;
+  background: #fffafb;
+  padding: 11px;
+}
+
+.intent-rule-grid dt {
+  color: #0e0d0d;
+  font-size: 0.6875rem;
+  font-weight: 900;
+}
+
+.intent-rule-grid dd {
+  margin-top: 3px;
+  color: #797979;
+  font-size: 0.625rem;
+  line-height: 1.5;
+}
+
+.intent-exclusion-note {
+  border-left: 3px solid #e55a7f;
+  padding-left: 11px;
+  color: #606060;
+  font-size: 0.6875rem;
+  line-height: 1.6;
+}
+
 .agent-panel {
   border-radius: 24px;
   background: #211f54;

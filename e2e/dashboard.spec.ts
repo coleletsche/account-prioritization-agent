@@ -29,6 +29,9 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
 
   const defaultOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
   await page.getByRole("button", { name: "Scoring controls", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How signals map to intent" })).toBeVisible();
+  await expect(page.getByLabel("How signals map to intent")).toContainText("Direct buying hand raise");
+  await expect(page.getByLabel("How signals map to intent")).toContainText("10×");
   await page.getByLabel("Intent weight").fill("0");
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("0%");
   await expect(page.getByLabel("Reset score weights")).toBeEnabled();
