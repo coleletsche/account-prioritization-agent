@@ -15,7 +15,7 @@ function formatCurrency(value?: number) {
   return value === undefined ? "Not available" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 }
 
-export function AccountDrawer({ account, recommendation, recommendationSource = "fallback", issues = [], onClose }: { account?: RankedAccount; recommendation?: AccountRecommendation; recommendationSource?: "ai" | "fallback"; issues?: DataQualityIssue[]; onClose: () => void }) {
+export function AccountDrawer({ account, recommendation, recommendationSource = "fallback", issues = [], onClose }: { account?: RankedAccount; recommendation?: AccountRecommendation; recommendationSource?: "ai" | "mixed" | "fallback"; issues?: DataQualityIssue[]; onClose: () => void }) {
   useEscape(Boolean(account), onClose);
   if (!account) return null;
   const { organization } = account;
@@ -47,7 +47,7 @@ export function AccountDrawer({ account, recommendation, recommendationSource = 
           </section>
 
           {recommendation && <section className="agent-recommendation" aria-labelledby="recommendation-heading">
-            <div className="flex items-start justify-between gap-4"><div className="flex items-center gap-3"><span className="metric-icon"><Bot size={17} /></span><div><h3 id="recommendation-heading" className="section-title">Recommended next action</h3><p className="mt-1 text-xs text-muted">{recommendationSource === "ai" ? "AI interpreted · policy checked" : "Deterministic action plan"}</p></div></div><span className={`action-pill action-${recommendation.recommended_action}`}>{recommendation.recommended_action.replaceAll("_", " ")}</span></div>
+            <div className="flex items-start justify-between gap-4"><div className="flex items-center gap-3"><span className="metric-icon"><Bot size={17} /></span><div><h3 id="recommendation-heading" className="section-title">Recommended next action</h3><p className="mt-1 text-xs text-muted">{recommendationSource === "ai" ? "AI interpreted · policy checked" : recommendationSource === "mixed" ? "Policy checked · mixed coverage" : "Deterministic action plan"}</p></div></div><span className={`action-pill action-${recommendation.recommended_action}`}>{recommendation.recommended_action.replaceAll("_", " ")}</span></div>
             <dl className="mt-5 space-y-4 text-sm"><div><dt className="font-extrabold text-ink">Why now</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.why_now}</dd></div><div><dt className="font-extrabold text-ink">Call angle</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.call_angle}</dd></div></dl>
             <p className="mt-4 text-xs capitalize text-muted">Urgency: {recommendation.urgency} · Agent confidence: {recommendation.confidence}</p>
           </section>}

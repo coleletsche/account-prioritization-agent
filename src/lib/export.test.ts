@@ -14,15 +14,16 @@ describe("review and export workflow", () => {
   it("exports the full reproducible ranking and active score settings", () => {
     const data = processCrmExports(fixture("accounts.csv"), fixture("engagement_signals.json"));
     const ranking = rankOrganizations(data.organizations, { asOfDate: "2026-08-17", weights: DEFAULT_WEIGHTS });
-    const request = buildSalesAgentRequest(ranking.slice(0, 40), { asOfDate: "2026-08-17", issues: [] });
+    const request = buildSalesAgentRequest(ranking, { asOfDate: "2026-08-17", issues: [] });
     const recommendations = new Map(deterministicRecommendations(request).map((recommendation) => [recommendation.account_id, recommendation]));
     const csv = buildRankingCsv(ranking, { asOfDate: "2026-08-17", weights: DEFAULT_WEIGHTS, recommendations });
     const parsed = Papa.parse<Record<string, string>>(csv, { header: true });
 
     expect(parsed.data).toHaveLength(285);
     expect(parsed.data[0]).toMatchObject({ rank: "1", as_of_date: "2026-08-17", intent_weight: "55", account_value_weight: "30", contact_timing_weight: "15" });
-    expect(parsed.meta.fields).toEqual(expect.arrayContaining(["aliases", "confidence", "account_score", "intent_score", "priority_band", "in_daily_queue", "why_now", "recommended_action", "call_angle", "warnings"]));
-    expect(parsed.data[0]).toMatchObject({ in_daily_queue: "yes", recommended_action: expect.stringMatching(/^(call_today|call_this_week|email|nurture)$/) });
+    expect(parsed.meta.fields).toEqual(expect.arrayContaining(["aliases", "confidence", "account_score", "intent_score", "priority_band", "why_now", "recommended_action", "call_angle", "warnings"]));
+    expect(parsed.meta.fields).not.toContain("in_daily_queue");
+    expect(parsed.data[0]).toMatchObject({ recommended_action: expect.stringMatching(/^(call_today|call_this_week|email|nurture)$/) });
   });
 
   it("surfaces future dates relative to the selected week", () => {

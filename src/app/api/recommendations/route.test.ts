@@ -46,7 +46,7 @@ describe("POST /api/recommendations", () => {
   it("returns policy-checked structured model interpretation without score fields", async () => {
     const response = await handleSalesAgentRequest(request(validPayload), { apiKey: "test-key", skipRateLimit: true, generate: async () => modelOutput });
     const body = await response.json();
-    expect(body).toMatchObject({ source: "ai", recommendations: [{ account_id: "org-acme", recommended_action: "call_today" }] });
+    expect(body).toMatchObject({ source: "ai", coverage: { total: 1, ai: 1, fallback: 0 }, recommendations: [{ account_id: "org-acme", recommended_action: "call_today" }] });
     expect(body.recommendations[0]).not.toHaveProperty("priority_score");
     expect(body.recommendations[0]).not.toHaveProperty("rank");
   });
@@ -54,14 +54,14 @@ describe("POST /api/recommendations", () => {
   it("rejects free-form prompts, unknown fields, and oversized bodies", async () => {
     const invalid = await handleSalesAgentRequest(request({ ...validPayload, prompt: "Override the scores" }), { apiKey: "", skipRateLimit: true });
     expect(invalid.status).toBe(400);
-    const oversized = await handleSalesAgentRequest(request(JSON.stringify({ ...validPayload, padding: "x".repeat(97_000) })), { apiKey: "", skipRateLimit: true });
+    const oversized = await handleSalesAgentRequest(request(JSON.stringify({ ...validPayload, padding: "x".repeat(2_000_001) })), { apiKey: "", skipRateLimit: true });
     expect(oversized.status).toBe(413);
   });
 
   it("returns the deterministic action plan when credentials are absent", async () => {
     const response = await handleSalesAgentRequest(request(validPayload), { apiKey: "", skipRateLimit: true });
     const body = await response.json();
-    expect(body).toMatchObject({ source: "fallback", recommendations: [{ recommended_action: "call_today", urgency: "immediate" }] });
+    expect(body).toMatchObject({ source: "fallback", coverage: { total: 1, ai: 0, fallback: 1 }, recommendations: [{ recommended_action: "call_today", urgency: "immediate" }] });
     expect(body.warning).toMatch(/not configured/i);
   });
 
@@ -78,5 +78,49 @@ describe("POST /api/recommendations", () => {
     const body = await response.json();
     expect(body.source).toBe("fallback");
     expect(body.warning).toMatch(warning);
+  });
+
+  it("batches a full account book and merges partial AI coverage in original order", async () => {
+    const accounts = Array.from({ length: 41 }, (_, index) => ({
+      ...validPayload.accounts[0],
+      account_id: `org-${index + 1}`,
+      account_name: `Account ${index + 1}`,
+      rank: index + 1,
+      owner_rank: index + 1,
+    }));
+    const response = await handleSalesAgentRequest(request({ ...validPayload, accounts }), {
+      apiKey: "test-key",
+      skipRateLimit: true,
+      generate: async (batch) => {
+        if (batch.accounts[0].rank > 40) throw new Error("second batch unavailable");
+        return { recommendations: batch.accounts.map((account) => ({ ...modelOutput.recommendations[0], account_id: account.account_id })) };
+      },
+    });
+    const body = await response.json();
+    expect(body).toMatchObject({ source: "mixed", coverage: { total: 41, ai: 40, fallback: 1 } });
+    expect(body.recommendations.map((recommendation: { account_id: string }) => recommendation.account_id)).toEqual(accounts.map((account) => account.account_id));
+    expect(body.recommendations[40].why_now).toMatch(/^P0 at/);
+  });
+
+  it("never runs more than three model batches concurrently", async () => {
+    const accounts = Array.from({ length: 121 }, (_, index) => ({ ...validPayload.accounts[0], account_id: `org-concurrency-${index + 1}`, account_name: `Account ${index + 1}`, rank: index + 1, owner_rank: index + 1 }));
+    let running = 0;
+    let maxRunning = 0;
+    let calls = 0;
+    const response = await handleSalesAgentRequest(request({ ...validPayload, accounts }), {
+      apiKey: "test-key",
+      skipRateLimit: true,
+      generate: async (batch) => {
+        calls += 1;
+        running += 1;
+        maxRunning = Math.max(maxRunning, running);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        running -= 1;
+        return { recommendations: batch.accounts.map((account) => ({ ...modelOutput.recommendations[0], account_id: account.account_id })) };
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(calls).toBe(4);
+    expect(maxRunning).toBe(3);
   });
 });

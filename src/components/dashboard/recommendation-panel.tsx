@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, CheckCircle2, RefreshCw, ShieldCheck } from "lucide-react";
 import { SalesAgentApiResponseSchema, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
 
-export function RecommendationPanel({ request, result, onResult }: { request?: SalesAgentRequest; result: SalesAgentApiResponse; onResult: (result: SalesAgentApiResponse) => void }) {
+export function RecommendationPanel({ request, result, onResult, canRefresh = true }: { request?: SalesAgentRequest; result: SalesAgentApiResponse; onResult: (result: SalesAgentApiResponse) => void; canRefresh?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [localWarning, setLocalWarning] = useState<string>();
-  const generated = result.source === "ai" || Boolean(result.warning);
-
   const generate = async () => {
-    if (!request || loading) return;
+    if (!request || loading || !canRefresh) return;
     setLoading(true);
     setLocalWarning(undefined);
     try {
@@ -38,19 +36,20 @@ export function RecommendationPanel({ request, result, onResult }: { request?: S
         </div>
         <span className="agent-icon"><Bot size={19} /></span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-white/65">The queue, scores, and bands stay deterministic. AI only explains why now and suggests a policy-checked action.</p>
+      <p className="mt-3 text-sm leading-6 text-white/65">The ranking, scores, and bands stay deterministic. AI only explains why now and suggests a policy-checked action.</p>
 
       <div className="mt-5 flex items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-white/5 px-3 py-2.5">
-        <span className="flex items-center gap-2 text-xs font-bold text-white/65"><ShieldCheck size={14} /> {request?.accounts.length ?? 0} validated accounts</span>
-        <span className={`agent-source ${result.source === "ai" ? "agent-source-ai" : ""}`}>{result.source === "ai" ? "AI interpreted" : "Deterministic plan"}</span>
+        <span className="flex items-center gap-2 text-xs font-bold text-white/65"><ShieldCheck size={14} /> {result.coverage.total} validated accounts</span>
+        <span className={`agent-source ${result.source !== "fallback" ? "agent-source-ai" : ""}`}>{result.source === "ai" ? "AI complete" : result.source === "mixed" ? "Mixed coverage" : "Deterministic plan"}</span>
       </div>
 
-      <button type="button" className="button-agent mt-5 w-full" onClick={generate} disabled={!request || loading}>
-        {loading ? <><RefreshCw className="animate-spin" size={16} /> Interpreting fixed ranks…</> : generated ? <><RefreshCw size={16} /> Refresh AI actions</> : <><Sparkles size={16} /> Interpret daily queues</>}
-      </button>
+      <dl className="agent-coverage mt-4"><div><dt>AI interpreted</dt><dd>{result.coverage.ai}</dd></div><div><dt>Deterministic fallback</dt><dd>{result.coverage.fallback}</dd></div></dl>
+
+      {canRefresh ? <button type="button" className="button-agent mt-5 w-full" onClick={generate} disabled={!request || loading}>{loading ? <><RefreshCw className="animate-spin" size={16} /> Interpreting full account book…</> : <><RefreshCw size={16} /> Refresh account analysis</>}</button>
+        : <div className="mt-5 flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/5 p-3 text-xs font-bold text-white/65"><CheckCircle2 size={15} /> VP-managed analysis · read only</div>}
 
       {(localWarning || result.warning) && <p className="mt-3 text-xs leading-5 text-[#ffd4df]" role="status">{localWarning ?? result.warning}</p>}
-      <p className="mt-4 text-[0.6875rem] leading-5 text-white/40">Only validated shortlist facts are sent. Raw CRM files are not uploaded or persisted.</p>
+      <p className="mt-4 text-[0.6875rem] leading-5 text-white/40">Only validated account summaries are sent. Raw CRM files are not uploaded or persisted.</p>
     </section>
   );
 }

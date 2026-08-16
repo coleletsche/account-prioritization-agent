@@ -49,6 +49,11 @@ export const AgentAccountSchema = z.object({
 
 export const SalesAgentRequestSchema = z.object({
   as_of_date: isoDate,
+  accounts: z.array(AgentAccountSchema).min(1).max(400),
+}).strict();
+
+export const SalesAgentBatchRequestSchema = z.object({
+  as_of_date: isoDate,
   accounts: z.array(AgentAccountSchema).min(1).max(40),
 }).strict();
 
@@ -66,13 +71,21 @@ export const SalesRecommendationsSchema = z.object({
 }).strict();
 
 export const SalesAgentApiResponseSchema = z.object({
-  recommendations: z.array(AccountRecommendationSchema).min(1).max(40),
-  source: z.enum(["ai", "fallback"]),
+  recommendations: z.array(AccountRecommendationSchema).min(1).max(400),
+  source: z.enum(["ai", "mixed", "fallback"]),
+  coverage: z.object({
+    total: z.number().int().positive().max(400),
+    ai: z.number().int().nonnegative().max(400),
+    fallback: z.number().int().nonnegative().max(400),
+  }).strict(),
   warning: z.string().max(300).optional(),
-}).strict();
+}).strict().refine((response) => response.coverage.ai + response.coverage.fallback === response.coverage.total && response.recommendations.length === response.coverage.total, {
+  message: "Recommendation coverage must match the returned account set.",
+});
 
 export type AgentAccount = z.infer<typeof AgentAccountSchema>;
 export type SalesAgentRequest = z.infer<typeof SalesAgentRequestSchema>;
+export type SalesAgentBatchRequest = z.infer<typeof SalesAgentBatchRequestSchema>;
 export type AccountRecommendation = z.infer<typeof AccountRecommendationSchema>;
 export type SalesRecommendations = z.infer<typeof SalesRecommendationsSchema>;
 export type SalesAgentApiResponse = z.infer<typeof SalesAgentApiResponseSchema>;
@@ -86,7 +99,7 @@ function accountStatus(account: RankedAccount, issues: DataQualityIssue[]): Vali
 export function buildSalesAgentRequest(accounts: RankedAccount[], options: { asOfDate: string; issues: DataQualityIssue[] }): SalesAgentRequest {
   return SalesAgentRequestSchema.parse({
     as_of_date: options.asOfDate,
-    accounts: accounts.slice(0, 40).map((account) => {
+    accounts: accounts.map((account) => {
       const entityIssues = options.issues.filter((issue) => issue.entityName === account.organization.canonicalName);
       const uniqueIssues = [...new Map([...account.organization.issues, ...entityIssues].map((issue) => [issue.id, issue])).values()];
       return {

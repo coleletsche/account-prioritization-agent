@@ -29,6 +29,7 @@ const request: SalesAgentRequest = {
 
 const fallback: SalesAgentApiResponse = {
   source: "fallback",
+  coverage: { total: 1, ai: 0, fallback: 1 },
   recommendations: [{ account_id: "org-acme", why_now: "P0 account.", recommended_action: "call_today", urgency: "immediate", call_angle: "Ask about the demo request.", confidence: "medium" }],
 };
 
@@ -37,12 +38,12 @@ afterEach(() => vi.unstubAllGlobals());
 describe("RecommendationPanel", () => {
   it("sends only the validated queue contract and returns structured interpretations", async () => {
     const onResult = vi.fn();
-    const response: SalesAgentApiResponse = { ...fallback, source: "ai", recommendations: [{ ...fallback.recommendations[0], why_now: "Recent demo intent." }] };
+    const response: SalesAgentApiResponse = { ...fallback, source: "ai", coverage: { total: 1, ai: 1, fallback: 0 }, recommendations: [{ ...fallback.recommendations[0], why_now: "Recent demo intent." }] };
     const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<{ json: () => Promise<unknown> }>>(async () => ({ json: async () => response }));
     vi.stubGlobal("fetch", fetchMock);
     render(<RecommendationPanel request={request} result={fallback} onResult={onResult} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Interpret daily queues" }));
+    fireEvent.click(screen.getByRole("button", { name: "Refresh account analysis" }));
     expect(await screen.findByText("1 validated accounts")).toBeInTheDocument();
     expect(onResult).toHaveBeenCalledWith(response);
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
@@ -54,7 +55,7 @@ describe("RecommendationPanel", () => {
   it("keeps the deterministic plan visible when the client response is invalid", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ json: async () => ({ broken: true }) })));
     render(<RecommendationPanel request={request} result={fallback} onResult={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Interpret daily queues" }));
+    fireEvent.click(screen.getByRole("button", { name: "Refresh account analysis" }));
     expect(await screen.findByText(/deterministic action plan remains active/i)).toBeInTheDocument();
   });
 });

@@ -1,18 +1,19 @@
 # Velora Account Prioritization MVP
 
-A desktop-first Next.js application that turns CRM account and engagement exports into deterministic daily call queues with policy-checked AI interpretation. Sales leadership gets a global Top 25, each SDR gets ten accounts, and every row includes reproducible scores, a P0–P3 band, recent signals, why now, and a recommended action.
+A desktop-first Next.js application that validates CRM account and engagement exports, deterministically ranks the complete eligible account book, and adds policy-checked AI interpretation. Every row includes reproducible scores, a P0–P3 band, recent signals, why now, and a recommended action.
 
 **Live reviewer app:** [account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app](https://account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app)
 
 ## What reviewers can do
 
-- Select the VP or a rep persona from the top navigation; reps receive a read-only daily Top 10.
+- Upload both exports or choose the bundled sample, then analyze the account book as one job.
+- Select the VP or a rep persona from the top navigation; reps receive their complete read-only owned account book.
 - Filter by owner, tier, region, industry, confidence, or account name.
 - Open an account to inspect score factors, exact inputs, engagement history, aliases, and warnings.
 - Change the three scoring weights while preserving a 100% total, then reset to defaults.
 - Validate two replacement exports before atomically applying them in browser memory.
 - Inspect every data-quality flag and download the full reproducible ranking.
-- Interpret every rep’s daily queue with structured AI output that cannot change scores, bands, validation, or ranks.
+- Interpret every eligible account with structured AI output that cannot change scores, bands, validation, or ranks.
 
 ## Run locally
 
@@ -23,7 +24,7 @@ npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The bundled assessment data loads automatically for the week of `2026-08-17`.
+Open [http://localhost:3000](http://localhost:3000), then upload both exports or choose **Use sample data**. The default scoring week is `2026-08-17`.
 
 AI interpretation is optional. Without a key the agent returns its deterministic P0–P3 action plan. To enable model-written why-now and call-angle text locally:
 
@@ -32,7 +33,7 @@ cp .env.example .env.local
 # Set OPENAI_API_KEY in .env.local, then restart npm run dev.
 ```
 
-`.env.local` is ignored by Git and Vercel packaging. The server sends at most 40 validated daily-queue summaries to `gpt-5.4-nano`; raw exports, websites, and free-form prompts are never sent.
+`.env.local` is ignored by Git and Vercel packaging. The server accepts the validated account book and sends it to `gpt-5.4-nano` in internal batches of at most 40 with concurrency capped at three. Raw exports, websites, and free-form prompts are never sent.
 
 ## Verify
 
@@ -43,7 +44,7 @@ npx playwright install chromium
 npm run verify
 ```
 
-`npm run verify` runs ESLint, 52 Vitest unit/component tests, a production build, and five Playwright workflows covering sample load, personas, reranking/reset, account evidence, review, uploads, CSV download, AI/fallback actions, keyboard dismissal, and the 390px mobile layout.
+`npm run verify` runs ESLint, 56 Vitest unit/component tests, a production build, and five Playwright workflows covering first-run intake, the complete account book, personas, reranking, review, replacement uploads, CSV export, AI/fallback coverage, and the 390px mobile layout.
 
 Individual commands:
 
@@ -81,9 +82,9 @@ Expected bundled baseline: 300 account rows, 360 engagement rows, 286 resolved o
 
 ## Session refresh and privacy
 
-Select one CSV and one JSON file, validate them, review the preview, then explicitly apply. Files remain in browser memory and a page refresh restores the bundled sample. The full-ranking export includes global and owner ranks, aliases, factor scores, confidence, reasons, warnings, effective weights, and as-of date.
+Select one CSV and one JSON file, then click **Analyze account book**. Validation, resolution, deterministic scoring, and AI interpretation run before the dashboard opens. Files and results remain in browser memory; refresh returns to the intake screen. Replacement imports do not change the active ranking unless the new pair validates successfully. The full-ranking export includes global and owner ranks, aliases, factor scores, confidence, reasons, actions, warnings, effective weights, and as-of date.
 
-The recommendation route rejects free-form prompts, more than 40 accounts, bodies over 96 KB, mismatched account IDs, and invalid schemas. It has a 20-second timeout and best-effort per-IP throttling. Failures return deterministic actions. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
+The recommendation route rejects free-form prompts, more than 400 accounts, bodies over 2 MB, mismatched account IDs, and invalid schemas. Each model batch has a 20-second timeout, and the route has best-effort per-IP throttling. Failed batches return deterministic actions while successful batches remain AI interpreted. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
 
 ## Deploy to Vercel
 

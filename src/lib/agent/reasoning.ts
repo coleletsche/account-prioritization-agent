@@ -1,15 +1,17 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { SalesAgentRequestSchema, SalesRecommendationsSchema, type SalesAgentRequest, type SalesRecommendations } from "./contracts";
+import { SalesAgentBatchRequestSchema, SalesAgentRequestSchema, SalesRecommendationsSchema, type AccountRecommendation, type SalesAgentBatchRequest, type SalesAgentRequest, type SalesRecommendations } from "./contracts";
 import { deterministicRecommendations, finalizeModelRecommendations } from "./orchestrator";
 
-const MAX_REQUEST_BYTES = 96_000;
+const MAX_REQUEST_BYTES = 2_000_000;
 const TIMEOUT_MS = 20_000;
+const MODEL_BATCH_SIZE = 40;
+const MODEL_CONCURRENCY = 3;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
 const RATE_LIMIT_REQUESTS = 6;
 const requestsByIp = new Map<string, number[]>();
 
-export type RecommendationGenerator = (input: SalesAgentRequest, signal: AbortSignal) => Promise<unknown>;
+export type RecommendationGenerator = (input: SalesAgentBatchRequest, signal: AbortSignal) => Promise<unknown>;
 
 export interface SalesAgentHandlerDependencies {
   apiKey?: string;
@@ -36,7 +38,7 @@ function withinRateLimit(ip: string, now: number): boolean {
   return true;
 }
 
-async function generateWithOpenAI(input: SalesAgentRequest, signal: AbortSignal, apiKey: string): Promise<SalesRecommendations> {
+async function generateWithOpenAI(input: SalesAgentBatchRequest, signal: AbortSignal, apiKey: string): Promise<SalesRecommendations> {
   const client = new OpenAI({ apiKey });
   const response = await client.responses.parse({
     model: "gpt-5.4-nano",
@@ -52,11 +54,58 @@ async function generateWithOpenAI(input: SalesAgentRequest, signal: AbortSignal,
     ].join(" "),
     input: JSON.stringify(input),
     text: { format: zodTextFormat(SalesRecommendationsSchema, "sales_account_recommendations") },
-    max_output_tokens: 4_500,
+    max_output_tokens: 8_000,
   }, { signal });
 
   if (!response.output_parsed) throw new Error("Structured recommendation output was empty.");
   return response.output_parsed;
+}
+
+function batchesFor(input: SalesAgentRequest): SalesAgentBatchRequest[] {
+  const batches: SalesAgentBatchRequest[] = [];
+  for (let index = 0; index < input.accounts.length; index += MODEL_BATCH_SIZE) {
+    batches.push(SalesAgentBatchRequestSchema.parse({ as_of_date: input.as_of_date, accounts: input.accounts.slice(index, index + MODEL_BATCH_SIZE) }));
+  }
+  return batches;
+}
+
+async function runWithConcurrency<T, R>(items: T[], concurrency: number, worker: (item: T) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await worker(items[index]);
+    }
+  }));
+  return results;
+}
+
+async function generateBatch(
+  input: SalesAgentBatchRequest,
+  generate: RecommendationGenerator,
+): Promise<{ recommendations: AccountRecommendation[]; source: "ai" | "fallback"; timedOut: boolean }> {
+  const fallback = deterministicRecommendations(input);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const generated = await generate(input, controller.signal);
+    return { recommendations: finalizeModelRecommendations(input, generated), source: "ai", timedOut: false };
+  } catch (error) {
+    return { recommendations: fallback, source: "fallback", timedOut: error instanceof Error && error.name === "AbortError" };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function fallbackResponse(input: SalesAgentRequest, warning: string) {
+  return {
+    recommendations: deterministicRecommendations(input),
+    source: "fallback" as const,
+    coverage: { total: input.accounts.length, ai: 0, fallback: input.accounts.length },
+    warning,
+  };
 }
 
 export async function handleSalesAgentRequest(request: Request, dependencies: SalesAgentHandlerDependencies = {}): Promise<Response> {
@@ -75,26 +124,25 @@ export async function handleSalesAgentRequest(request: Request, dependencies: Sa
 
   const parsed = SalesAgentRequestSchema.safeParse(candidate);
   if (!parsed.success) return json({ error: "Recommendation payload is invalid.", details: parsed.error.issues.map((issue) => issue.message) }, 400);
-  const fallback = deterministicRecommendations(parsed.data);
-
   if (!dependencies.skipRateLimit && !withinRateLimit(clientIp(request), (dependencies.now ?? Date.now)())) {
-    return json({ recommendations: fallback, source: "fallback", warning: "Recommendation request limit reached. Showing the deterministic action plan." }, 429);
+    return json(fallbackResponse(parsed.data, "Recommendation request limit reached. Showing the deterministic action plan."), 429);
   }
 
   const apiKey = dependencies.apiKey ?? process.env.OPENAI_API_KEY;
-  if (!apiKey && !dependencies.generate) return json({ recommendations: fallback, source: "fallback", warning: "AI recommendations are not configured. Showing the deterministic action plan." });
+  if (!apiKey && !dependencies.generate) return json(fallbackResponse(parsed.data, "AI recommendations are not configured. Showing the deterministic action plan."));
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const generated = await (dependencies.generate ? dependencies.generate(parsed.data, controller.signal) : generateWithOpenAI(parsed.data, controller.signal, apiKey as string));
-    return json({ recommendations: finalizeModelRecommendations(parsed.data, generated), source: "ai" });
-  } catch (error) {
-    const warning = error instanceof Error && error.name === "AbortError"
-      ? "AI recommendations timed out. Showing the deterministic action plan."
-      : "AI recommendations are temporarily unavailable. Showing the deterministic action plan.";
-    return json({ recommendations: fallback, source: "fallback", warning });
-  } finally {
-    clearTimeout(timeout);
-  }
+  const generate = dependencies.generate ?? ((input: SalesAgentBatchRequest, signal: AbortSignal) => generateWithOpenAI(input, signal, apiKey as string));
+  const results = await runWithConcurrency(batchesFor(parsed.data), MODEL_CONCURRENCY, (batch) => generateBatch(batch, generate));
+  const recommendations = results.flatMap((result) => result.recommendations);
+  const ai = results.filter((result) => result.source === "ai").reduce((total, result) => total + result.recommendations.length, 0);
+  const fallback = recommendations.length - ai;
+  const source = ai === recommendations.length ? "ai" : ai > 0 ? "mixed" : "fallback";
+  const warning = fallback === 0
+    ? undefined
+    : ai > 0
+      ? `AI interpreted ${ai} of ${recommendations.length} accounts. Deterministic actions cover the remaining ${fallback}.`
+      : results.some((result) => result.timedOut)
+        ? "AI recommendations timed out. Showing the deterministic action plan."
+        : "AI recommendations are temporarily unavailable. Showing the deterministic action plan.";
+  return json({ recommendations, source, coverage: { total: recommendations.length, ai, fallback }, ...(warning ? { warning } : {}) });
 }

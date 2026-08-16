@@ -43,7 +43,7 @@ export function RankingTable({ accounts, recommendations, showGlobalRank, onSele
               </td>
               <td><p className="max-w-[190px] text-sm capitalize text-ink">{eventSummary(account)}</p><p className="mt-1 text-xs text-muted">Intent {account.factors.intent.toFixed(0)}</p></td>
               <td><p className="max-w-[290px] text-sm leading-6 text-muted">{recommendation?.why_now ?? account.reason}</p></td>
-              <td>{recommendation ? <span className={`action-pill action-${recommendation.recommended_action}`}>{ACTION_LABELS[recommendation.recommended_action]}</span> : <span className="text-xs text-muted">Outside daily Top 10</span>}</td>
+              <td>{recommendation ? <span className={`action-pill action-${recommendation.recommended_action}`}>{ACTION_LABELS[recommendation.recommended_action]}</span> : <span className="text-xs text-muted">Preparing action</span>}</td>
               <td><span className="owner-chip">{account.organization.owner}</span></td>
               <td className="text-right"><button type="button" className="score-button" onClick={() => onSelect(account)} aria-label={`Open ${account.organization.canonicalName}, ${account.priorityBand}, score ${account.priorityScore.toFixed(1)}`}><span className={`priority-band band-${account.priorityBand.toLowerCase()}`}>{account.priorityBand}</span><strong>{account.priorityScore.toFixed(1)}</strong><MousePointerClick size={13} /></button></td>
             </tr>;

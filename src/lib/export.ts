@@ -32,7 +32,6 @@ export function buildRankingCsv(accounts: RankedAccount[], options: { asOfDate: 
       contact_timing_score: account.factors.timing?.toFixed(2) ?? "",
       account_score: account.accountScore?.toFixed(2) ?? "",
       priority_band: account.priorityBand,
-      in_daily_queue: account.ownerRank <= 10 ? "yes" : "no",
       dominant_factor: account.dominantFactor,
       reason: safeCell(account.reason),
       why_now: safeCell(recommendation?.why_now),
