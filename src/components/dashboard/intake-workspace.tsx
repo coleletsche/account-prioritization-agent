@@ -51,8 +51,7 @@ export function IntakeWorkspace({ phase, stage, onAnalyze, onValidatingChange }:
           </div>
         ) : (
           <section className="analysis-card" aria-live="polite" aria-labelledby="analysis-title">
-            <span className="analysis-bot"><Bot size={24} /></span>
-            <p className="eyebrow mt-6">Account-book analysis</p>
+            <p className="eyebrow">Account-book analysis</p>
             <h1 id="analysis-title" className="mt-2 text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.05em] text-ink">Preparing the complete ranking</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">Deterministic validation and scoring run first. AI is interpreting those fixed results without changing their order.</p>
             <ol className="analysis-steps mt-8">

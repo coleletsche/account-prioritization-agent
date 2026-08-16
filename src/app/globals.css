@@ -1335,17 +1335,6 @@ select:focus-visible {
   margin-inline: auto;
 }
 
-.analysis-bot {
-  display: inline-flex;
-  width: 52px;
-  height: 52px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: #211f54;
-  color: #ff9ab5;
-}
-
 .analysis-steps {
   overflow: hidden;
   border: 1px solid #ededed;
