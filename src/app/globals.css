@@ -544,6 +544,10 @@ select:focus-visible {
   padding: 6px 9px;
 }
 
+.owner-chip {
+  white-space: nowrap;
+}
+
 .score-button {
   display: inline-flex;
   align-items: center;

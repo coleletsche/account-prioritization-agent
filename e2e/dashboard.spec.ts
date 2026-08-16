@@ -26,6 +26,9 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await expect(page.getByText("Know who to call first.", { exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Data overview")).toHaveCount(0);
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
+  const firstRow = page.getByTestId("ranking-table").locator("tbody tr").first();
+  await expect(firstRow.locator("td").nth(4)).not.toContainText(/immediate|high/i);
+  expect(await firstRow.locator(".owner-chip").evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
 
   const defaultOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
   await page.getByRole("button", { name: "Scoring controls", exact: true }).click();
