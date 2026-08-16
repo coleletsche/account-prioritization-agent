@@ -139,6 +139,21 @@ export function AccountDashboard() {
     setUtilityPanel(undefined);
   };
 
+  const returnToPreparation = () => {
+    resetWorkspace();
+    setData(undefined);
+    setWeights({ ...DEFAULT_WEIGHTS });
+    setAsOfDate(DEFAULT_WEEK);
+    setAnalysisStage("scoring");
+    setUploadOpen(false);
+    setReplacementBusy(false);
+    setReviewOpen(false);
+    setMethodologyOpen(false);
+    setDatasetLabel("");
+    setAgentResult(undefined);
+    setPhase("input");
+  };
+
   const prepareDataset = async (nextData: EntityResolutionResult, label: string, replacement = false) => {
     const nextRanked = rankOrganizations(nextData.organizations, { asOfDate, weights });
     if (nextRanked.length === 0) throw new Error("No eligible organizations with an owner were found. Review the export and try again.");
@@ -208,7 +223,7 @@ export function AccountDashboard() {
     <main className="min-h-screen bg-canvas">
       <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
         <div className="page-shell flex min-h-[80px] items-center justify-between gap-5 py-3">
-          <div className="flex items-center gap-5"><Image src="/brand/velora-logo.svg" alt="Velora" width={192} height={30} preload className="h-auto w-[150px] sm:w-[180px]" /><span className="hidden h-7 w-px bg-line lg:block" /><span className="hidden text-sm font-extrabold text-ink lg:block">Account priority</span></div>
+          <div className="flex items-center gap-5"><button type="button" className="brand-home" onClick={returnToPreparation} aria-label="Return to account preparation"><Image src="/brand/velora-logo.svg" alt="Velora" width={192} height={30} preload className="h-auto w-[150px] sm:w-[180px]" /></button><span className="hidden h-7 w-px bg-line lg:block" /><span className="hidden text-sm font-extrabold text-ink lg:block">Account Priority Agent</span></div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button type="button" className="button-ghost hidden sm:inline-flex" onClick={() => setMethodologyOpen(true)}><Info size={16} /> Methodology</button>
             <label className="persona-switcher" title="MVP persona preview; production access would require authentication and role-based permissions"><UserRoundCheck size={16} aria-hidden="true" /><span>View as</span><select aria-label="Select persona" value={persona} onChange={(event) => changePersona(event.target.value)}><option value="vp">VP of Sales</option>{owners.map((owner) => <option key={owner} value={owner}>{owner}</option>)}</select></label>

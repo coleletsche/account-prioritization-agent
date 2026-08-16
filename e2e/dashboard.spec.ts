@@ -36,6 +36,7 @@ async function openDashboard(page: Page, options: { installDefaultAgentMock?: bo
   if (options.installDefaultAgentMock !== false) await mockDeterministicAgent(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Prepare this account book" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Return to account preparation" })).toHaveCount(0);
   await expect(page.getByLabel("Select persona")).toHaveCount(0);
   await page.getByRole("button", { name: "Use sample data" }).click();
   await expect(page.getByText("engagement_signals.json", { exact: true })).toBeVisible();
@@ -53,6 +54,7 @@ function watchRuntimeErrors(page: Page) {
 test("starts with intake, analyzes the full supplied account book, and preserves VP/rep permissions", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await openDashboard(page);
+  await expect(page.getByText("Account Priority Agent", { exact: true })).toBeVisible();
   await expect(page.getByText("Showing 1–25 of 285 eligible accounts", { exact: true })).toBeVisible();
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
   await expect(page.getByRole("button", { name: "Previous page" })).toBeDisabled();
@@ -92,6 +94,14 @@ test("starts with intake, analyzes the full supplied account book, and preserves
   await page.getByTestId("ranking-table").locator("tbody tr").first().getByRole("button").first().click();
   await expect(page.getByRole("dialog").getByText("Factor breakdown", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Return to account preparation" }).click();
+  await expect(page.getByRole("heading", { name: "Prepare this account book" })).toBeVisible();
+  await expect(page.getByLabel("Select persona")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Analyze account book", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Use sample data" }).click();
+  await page.getByRole("button", { name: "Analyze account book", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Account ranking", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
