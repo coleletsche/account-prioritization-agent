@@ -46,7 +46,7 @@ describe("POST /api/recommendations", () => {
   it("returns policy-checked structured model interpretation without score fields", async () => {
     const response = await handleSalesAgentRequest(request(validPayload), { apiKey: "test-key", skipRateLimit: true, generate: async () => modelOutput });
     const body = await response.json();
-    expect(body).toMatchObject({ source: "ai", coverage: { total: 1, ai: 1, fallback: 0 }, recommendations: [{ account_id: "org-acme", recommended_action: "call_today" }] });
+    expect(body).toMatchObject({ source: "ai", generated_account_ids: ["org-acme"], coverage: { total: 1, ai: 1, fallback: 0 }, recommendations: [{ account_id: "org-acme", recommended_action: "call_today" }] });
     expect(body.recommendations[0]).not.toHaveProperty("priority_score");
     expect(body.recommendations[0]).not.toHaveProperty("rank");
   });
@@ -58,10 +58,10 @@ describe("POST /api/recommendations", () => {
     expect(oversized.status).toBe(413);
   });
 
-  it("returns the deterministic action plan when credentials are absent", async () => {
+  it("marks the account ungenerated when credentials are absent", async () => {
     const response = await handleSalesAgentRequest(request(validPayload), { apiKey: "", skipRateLimit: true });
     const body = await response.json();
-    expect(body).toMatchObject({ source: "fallback", coverage: { total: 1, ai: 0, fallback: 1 }, recommendations: [{ recommended_action: "call_today", urgency: "immediate" }] });
+    expect(body).toMatchObject({ source: "fallback", generated_account_ids: [], coverage: { total: 1, ai: 0, fallback: 1 }, recommendations: [{ recommended_action: "call_today", urgency: "immediate" }] });
     expect(body.warning).toMatch(/not configured/i);
   });
 
@@ -98,6 +98,7 @@ describe("POST /api/recommendations", () => {
     });
     const body = await response.json();
     expect(body).toMatchObject({ source: "mixed", coverage: { total: 41, ai: 40, fallback: 1 } });
+    expect(body.generated_account_ids).toEqual(accounts.slice(0, 40).map((account) => account.account_id));
     expect(body.recommendations.map((recommendation: { account_id: string }) => recommendation.account_id)).toEqual(accounts.map((account) => account.account_id));
     expect(body.recommendations[40].why_now).toMatch(/^P0 at/);
   });

@@ -1,6 +1,6 @@
 # Velora Account Prioritization MVP
 
-A desktop-first Next.js application that validates CRM account and engagement exports, deterministically ranks the complete eligible account book, and adds policy-checked AI interpretation. Every row includes reproducible scores, a P0–P3 band, recent signals, why now, and a recommended action.
+A desktop-first Next.js application that validates CRM account and engagement exports, deterministically ranks the complete eligible account book, and generates policy-checked AI outreach plans on demand. Every row includes reproducible scores, a P0–P3 band, and recent signals; AI-authored Why now, action, and call-plan guidance appears only after explicit generation.
 
 **Live reviewer app:** [account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app](https://account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app)
 
@@ -13,7 +13,8 @@ A desktop-first Next.js application that validates CRM account and engagement ex
 - Change the three scoring weights while preserving a 100% total, then reset to defaults.
 - Validate two replacement exports before atomically applying them in browser memory.
 - Inspect every data-quality flag and download the full reproducible ranking.
-- Interpret every eligible account with structured AI output that cannot change scores, bands, validation, or ranks.
+- Optionally generate every AI outreach plan at intake, generate the full book later, or generate one account at a time.
+- Keep ungenerated and failed plans visibly empty instead of presenting deterministic copy as AI interpretation.
 
 ## Run locally
 
@@ -26,7 +27,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), then upload both exports or choose **Use sample data**. The default scoring week is `2026-08-17`.
 
-AI interpretation is optional. Without a key the agent returns its deterministic P0–P3 action plan. To enable model-written why-now and call-angle text locally:
+AI interpretation is optional. Without a key the deterministic ranking remains fully usable, while outreach plans remain ungenerated. To enable model-written Why now, action, and call-plan text locally:
 
 ```bash
 cp .env.example .env.local
@@ -44,7 +45,7 @@ npx playwright install chromium
 npm run verify
 ```
 
-`npm run verify` runs ESLint, 56 Vitest unit/component tests, a production build, and five Playwright workflows covering first-run intake, the complete account book, personas, reranking, review, replacement uploads, CSV export, AI/fallback coverage, and the 390px mobile layout.
+`npm run verify` runs ESLint, 57 Vitest unit/component tests, a production build, and five Playwright workflows covering first-run intake, on-demand and optional bulk AI plans, the complete account book, personas, reranking, review, replacement uploads, CSV export, partial coverage, and the 390px mobile layout.
 
 Individual commands:
 
@@ -82,13 +83,13 @@ Expected bundled baseline: 300 account rows, 360 engagement rows, 286 resolved o
 
 ## Session refresh and privacy
 
-Select one CSV and one JSON file, then click **Analyze account book**. Validation, resolution, deterministic scoring, and AI interpretation run before the dashboard opens. Files and results remain in browser memory; refresh returns to the intake screen. Replacement imports do not change the active ranking unless the new pair validates successfully. The full-ranking export includes global and owner ranks, aliases, factor scores, confidence, reasons, actions, warnings, effective weights, and as-of date.
+Select one CSV and one JSON file, then click **Analyze account book**. Validation, resolution, and deterministic scoring run before the dashboard opens. The optional intake checkbox also generates all AI outreach plans; otherwise use a row action or **Generate all plans** later. Files and results remain in browser memory, and refresh returns to intake. Replacement imports do not change the active ranking unless the new pair validates successfully. The full-ranking export includes plan fields only for accounts whose AI plan was generated.
 
-The recommendation route rejects free-form prompts, more than 400 accounts, bodies over 2 MB, mismatched account IDs, and invalid schemas. Each model batch has a 20-second timeout, and the route has best-effort per-IP throttling. Failed batches return deterministic actions while successful batches remain AI interpreted. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
+The recommendation route rejects free-form prompts, more than 400 accounts, bodies over 2 MB, mismatched account IDs, and invalid schemas. Each model batch has a 20-second timeout, and the route has best-effort per-IP throttling. The API identifies exactly which accounts received model output; failed batches stay visibly ungenerated and can be retried. Post-model policy forces `needs_data_review` for blocking identity/data and `no_action` for explicit suppression.
 
 ## Deploy to Vercel
 
-Deploy the app first without an AI key; the agent safely uses its deterministic action plan:
+Deploy the app first without an AI key; deterministic ranking still works and AI plan controls fail safely without displaying fallback copy:
 
 ```bash
 vercel deploy -y

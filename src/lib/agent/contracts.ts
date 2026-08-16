@@ -72,6 +72,7 @@ export const SalesRecommendationsSchema = z.object({
 
 export const SalesAgentApiResponseSchema = z.object({
   recommendations: z.array(AccountRecommendationSchema).min(1).max(400),
+  generated_account_ids: z.array(z.string().min(1).max(100)).max(400),
   source: z.enum(["ai", "mixed", "fallback"]),
   coverage: z.object({
     total: z.number().int().positive().max(400),
@@ -79,8 +80,15 @@ export const SalesAgentApiResponseSchema = z.object({
     fallback: z.number().int().nonnegative().max(400),
   }).strict(),
   warning: z.string().max(300).optional(),
-}).strict().refine((response) => response.coverage.ai + response.coverage.fallback === response.coverage.total && response.recommendations.length === response.coverage.total, {
-  message: "Recommendation coverage must match the returned account set.",
+}).strict().superRefine((response, context) => {
+  if (response.coverage.ai + response.coverage.fallback !== response.coverage.total || response.recommendations.length !== response.coverage.total) {
+    context.addIssue({ code: "custom", message: "Recommendation coverage must match the returned account set." });
+  }
+  const generatedIds = new Set(response.generated_account_ids);
+  const recommendationIds = new Set(response.recommendations.map((recommendation) => recommendation.account_id));
+  if (generatedIds.size !== response.generated_account_ids.length || generatedIds.size !== response.coverage.ai || response.generated_account_ids.some((id) => !recommendationIds.has(id))) {
+    context.addIssue({ code: "custom", message: "Generated account IDs must identify exactly the AI-generated recommendations." });
+  }
 });
 
 export type AgentAccount = z.infer<typeof AgentAccountSchema>;

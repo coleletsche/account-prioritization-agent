@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, Bot, CalendarDays, Database, Download, Info, ListChecks, LockKeyhole, RefreshCw, Search, SlidersHorizontal, UserRoundCheck, X } from "lucide-react";
-import { buildSalesAgentRequest, deterministicRecommendations, SalesAgentApiResponseSchema, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
+import { AlertTriangle, Bot, CalendarDays, Database, Download, Info, ListChecks, LoaderCircle, LockKeyhole, RefreshCw, Search, SlidersHorizontal, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { buildSalesAgentRequest, deterministicRecommendations, SalesAgentApiResponseSchema, type AccountRecommendation, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
 import type { EntityResolutionResult, RankedAccount, ScoreWeights } from "@/lib/data";
 import { buildRankingCsv, rankingFilename } from "@/lib/export";
 import { getEffectiveReviewQueue } from "@/lib/quality";
@@ -14,7 +14,7 @@ import { RankingTable } from "./ranking-table";
 import { RANKING_PAGE_SIZE, RankingPagination } from "./ranking-pagination";
 import { RecommendationPanel } from "./recommendation-panel";
 import { ReviewQueue } from "./review-queue";
-import { UploadDialog } from "./upload-dialog";
+import { UploadDialog, type AnalysisOptions } from "./upload-dialog";
 import { useEscape } from "./use-escape";
 import { WeightControls } from "./weight-controls";
 
@@ -25,9 +25,10 @@ function analysisScopeKey(asOfDate: string, weights: ScoreWeights, accounts: Ran
   return JSON.stringify({ asOfDate, weights, accounts: accounts.map((account) => [account.organization.id, account.priorityScore]) });
 }
 
-function deterministicResponse(request: SalesAgentRequest, warning?: string): SalesAgentApiResponse {
+function ungeneratedResponse(request: SalesAgentRequest, warning?: string): SalesAgentApiResponse {
   return {
     recommendations: deterministicRecommendations(request),
+    generated_account_ids: [],
     source: "fallback",
     coverage: { total: request.accounts.length, ai: 0, fallback: request.accounts.length },
     ...(warning ? { warning } : {}),
@@ -35,7 +36,7 @@ function deterministicResponse(request: SalesAgentRequest, warning?: string): Sa
 }
 
 async function interpretAccountBook(request: SalesAgentRequest): Promise<SalesAgentApiResponse> {
-  const fallback = deterministicResponse(request, "AI interpretation is unavailable. The deterministic action plan remains active.");
+  const fallback = ungeneratedResponse(request, "AI plan generation is unavailable. No plans were generated.");
   try {
     const response = await fetch("/api/recommendations", {
       method: "POST",
@@ -49,6 +50,28 @@ async function interpretAccountBook(request: SalesAgentRequest): Promise<SalesAg
   }
 }
 
+function mergeGeneratedResponses(request: SalesAgentRequest, current: SalesAgentApiResponse | undefined, incoming: SalesAgentApiResponse): SalesAgentApiResponse {
+  const generatedIds = new Set([...(current?.generated_account_ids ?? []), ...incoming.generated_account_ids]);
+  const generatedPlans = new Map<string, AccountRecommendation>();
+  for (const response of [current, incoming]) {
+    if (!response) continue;
+    const responseIds = new Set(response.generated_account_ids);
+    for (const recommendation of response.recommendations) {
+      if (responseIds.has(recommendation.account_id)) generatedPlans.set(recommendation.account_id, recommendation);
+    }
+  }
+  const recommendations = deterministicRecommendations(request).map((recommendation) => generatedPlans.get(recommendation.account_id) ?? recommendation);
+  const ai = generatedIds.size;
+  const fallback = recommendations.length - ai;
+  return {
+    recommendations,
+    generated_account_ids: request.accounts.map((account) => account.account_id).filter((id) => generatedIds.has(id)),
+    source: ai === recommendations.length ? "ai" : ai > 0 ? "mixed" : "fallback",
+    coverage: { total: recommendations.length, ai, fallback },
+    ...(incoming.warning ? { warning: incoming.warning } : {}),
+  };
+}
+
 function allowPaint(): Promise<void> {
   return new Promise((resolve) => {
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => resolve());
@@ -59,6 +82,7 @@ function allowPaint(): Promise<void> {
 export function AccountDashboard() {
   const [phase, setPhase] = useState<WorkspacePhase>("input");
   const [analysisStage, setAnalysisStage] = useState<AnalysisStage>("scoring");
+  const [analysisIncludesAi, setAnalysisIncludesAi] = useState(false);
   const [data, setData] = useState<EntityResolutionResult>();
   const [weights, setWeights] = useState<ScoreWeights>({ ...DEFAULT_WEIGHTS });
   const [asOfDate, setAsOfDate] = useState(DEFAULT_WEEK);
@@ -79,6 +103,9 @@ export function AccountDashboard() {
   const [utilityPanel, setUtilityPanel] = useState<UtilityPanel>();
   const [datasetLabel, setDatasetLabel] = useState("");
   const [agentResult, setAgentResult] = useState<{ scopeKey: string; response: SalesAgentApiResponse }>();
+  const [generatingIds, setGeneratingIds] = useState<Set<string>>(() => new Set());
+  const [generationErrors, setGenerationErrors] = useState<Map<string, string>>(() => new Map());
+  const [bulkGenerating, setBulkGenerating] = useState(false);
   const tableStartRef = useRef<HTMLDivElement>(null);
   useEscape(methodologyOpen, () => setMethodologyOpen(false));
   useEscape(Boolean(utilityPanel), () => setUtilityPanel(undefined));
@@ -94,13 +121,18 @@ export function AccountDashboard() {
   const personaAccounts = useMemo(() => isVp ? ranked : ranked.filter((account) => account.organization.owner === persona), [ranked, isVp, persona]);
   const agentRequest = useMemo(() => ranked.length > 0 ? buildSalesAgentRequest(ranked, { asOfDate, issues: reviewIssues }) : undefined, [ranked, asOfDate, reviewIssues]);
   const agentScopeKey = useMemo(() => analysisScopeKey(asOfDate, weights, ranked), [asOfDate, weights, ranked]);
-  const deterministicAgentResponse = useMemo<SalesAgentApiResponse>(() => agentRequest
-    ? deterministicResponse(agentRequest, agentResult ? "The ranking changed. Refresh AI interpretation to update the action rationale." : undefined)
-    : { recommendations: [], source: "fallback", coverage: { total: 0, ai: 0, fallback: 0 } }, [agentRequest, agentResult]);
-  const activeAgentResponse = agentResult?.scopeKey === agentScopeKey ? agentResult.response : deterministicAgentResponse;
-  const recommendations = useMemo(() => new Map(activeAgentResponse.recommendations.map((recommendation) => [recommendation.account_id, recommendation])), [activeAgentResponse]);
+  const emptyAgentResponse = useMemo<SalesAgentApiResponse>(() => agentRequest
+    ? ungeneratedResponse(agentRequest, agentResult ? "The ranking changed. Generate fresh AI plans for the current scores." : undefined)
+    : { recommendations: [], generated_account_ids: [], source: "fallback", coverage: { total: 0, ai: 0, fallback: 0 } }, [agentRequest, agentResult]);
+  const activeAgentResponse = agentResult?.scopeKey === agentScopeKey ? agentResult.response : emptyAgentResponse;
+  const recommendations = useMemo(() => {
+    const generatedIds = new Set(activeAgentResponse.generated_account_ids);
+    return new Map(activeAgentResponse.recommendations.filter((recommendation) => generatedIds.has(recommendation.account_id)).map((recommendation) => [recommendation.account_id, recommendation]));
+  }, [activeAgentResponse]);
   const selectedRecommendation = selected ? recommendations.get(selected.organization.id) : undefined;
   const selectedIssues = selected ? reviewIssues.filter((issue) => issue.entityName === selected.organization.canonicalName) : [];
+  const generatedPlanCount = activeAgentResponse.generated_account_ids.length;
+  const allPlansGenerated = ranked.length > 0 && generatedPlanCount === ranked.length;
 
   const visible = useMemo(() => {
     let candidates = personaAccounts;
@@ -137,6 +169,9 @@ export function AccountDashboard() {
     setFiltersOpen(false);
     setSelectedId(undefined);
     setUtilityPanel(undefined);
+    setGeneratingIds(new Set());
+    setGenerationErrors(new Map());
+    setBulkGenerating(false);
   };
 
   const returnToPreparation = () => {
@@ -145,6 +180,7 @@ export function AccountDashboard() {
     setWeights({ ...DEFAULT_WEIGHTS });
     setAsOfDate(DEFAULT_WEEK);
     setAnalysisStage("scoring");
+    setAnalysisIncludesAi(false);
     setUploadOpen(false);
     setReplacementBusy(false);
     setReviewOpen(false);
@@ -154,11 +190,12 @@ export function AccountDashboard() {
     setPhase("input");
   };
 
-  const prepareDataset = async (nextData: EntityResolutionResult, label: string, replacement = false) => {
+  const prepareDataset = async (nextData: EntityResolutionResult, label: string, options: AnalysisOptions, replacement = false) => {
     const nextRanked = rankOrganizations(nextData.organizations, { asOfDate, weights });
     if (nextRanked.length === 0) throw new Error("No eligible organizations with an owner were found. Review the export and try again.");
     const nextIssues = getEffectiveReviewQueue(nextData, asOfDate);
     const nextRequest = buildSalesAgentRequest(nextRanked, { asOfDate, issues: nextIssues });
+    setAnalysisIncludesAi(options.generateAllPlans);
     if (replacement) setReplacementBusy(true);
     else {
       setAnalysisStage("scoring");
@@ -167,11 +204,11 @@ export function AccountDashboard() {
     }
 
     try {
-      if (!replacement) {
+      if (!replacement && options.generateAllPlans) {
         setAnalysisStage("ai");
         await allowPaint();
       }
-      const response = await interpretAccountBook(nextRequest);
+      const response = options.generateAllPlans ? await interpretAccountBook(nextRequest) : ungeneratedResponse(nextRequest);
       if (!replacement) {
         setAnalysisStage("preparing");
         await allowPaint();
@@ -188,7 +225,7 @@ export function AccountDashboard() {
   };
 
   if (phase !== "dashboard" || !data) {
-    return <IntakeWorkspace phase={phase === "dashboard" ? "input" : phase} stage={analysisStage} onAnalyze={(nextData, label) => prepareDataset(nextData, label)} onValidatingChange={(validating) => setPhase(validating ? "validating" : "input")} />;
+    return <IntakeWorkspace phase={phase === "dashboard" ? "input" : phase} stage={analysisStage} generatePlans={analysisIncludesAi} onAnalyze={(nextData, label, options) => prepareDataset(nextData, label, options)} onValidatingChange={(validating) => setPhase(validating ? "validating" : "input")} />;
   }
 
   const freshnessDays = data.latestEngagementDate ? daysBetween(data.latestEngagementDate, asOfDate) : undefined;
@@ -218,6 +255,55 @@ export function AccountDashboard() {
     setUtilityPanel(undefined);
   };
 
+  const generateAccountPlan = async (account: RankedAccount) => {
+    if (!agentRequest || bulkGenerating || generatingIds.has(account.organization.id)) return;
+    const requestAccount = agentRequest.accounts.find((candidate) => candidate.account_id === account.organization.id);
+    if (!requestAccount) return;
+    const accountId = account.organization.id;
+    setGeneratingIds((current) => new Set(current).add(accountId));
+    setGenerationErrors((current) => {
+      const next = new Map(current);
+      next.delete(accountId);
+      return next;
+    });
+    try {
+      const response = await interpretAccountBook({ as_of_date: agentRequest.as_of_date, accounts: [requestAccount] });
+      const generated = response.generated_account_ids.includes(accountId);
+      setAgentResult((current) => ({
+        scopeKey: agentScopeKey,
+        response: mergeGeneratedResponses(agentRequest, current?.scopeKey === agentScopeKey ? current.response : undefined, response),
+      }));
+      if (!generated) {
+        setGenerationErrors((current) => new Map(current).set(accountId, response.warning ?? "AI plan was not generated. Try again."));
+      }
+    } finally {
+      setGeneratingIds((current) => {
+        const next = new Set(current);
+        next.delete(accountId);
+        return next;
+      });
+    }
+  };
+
+  const generateRemainingPlans = async () => {
+    if (!agentRequest || bulkGenerating || generatingIds.size > 0) return;
+    const generatedIds = new Set(activeAgentResponse.generated_account_ids);
+    const remainingAccounts = agentRequest.accounts.filter((account) => !generatedIds.has(account.account_id));
+    if (remainingAccounts.length === 0) return;
+    setBulkGenerating(true);
+    setGeneratingIds(new Set(remainingAccounts.map((account) => account.account_id)));
+    try {
+      const response = await interpretAccountBook({ as_of_date: agentRequest.as_of_date, accounts: remainingAccounts });
+      setAgentResult((current) => ({
+        scopeKey: agentScopeKey,
+        response: mergeGeneratedResponses(agentRequest, current?.scopeKey === agentScopeKey ? current.response : undefined, response),
+      }));
+    } finally {
+      setBulkGenerating(false);
+      setGeneratingIds(new Set());
+    }
+  };
+
   return (
     <main className="min-h-screen bg-canvas">
       <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
@@ -234,32 +320,31 @@ export function AccountDashboard() {
         <section className="queue-workspace min-w-0 overflow-hidden rounded-card border border-line bg-white shadow-card">
           <div className="queue-heading border-b border-line px-5 py-5 sm:px-7 sm:py-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="queue-kicker">{isVp ? "VP workspace" : "Rep workspace"}</span>{!isVp && <span className="read-only-pill"><LockKeyhole size={12} /> Read only</span>}</div><h1 className="mt-2 text-[clamp(2rem,4vw,2.75rem)] font-black leading-tight tracking-[-0.045em] text-ink">{isVp ? "Account ranking" : `${persona}’s account ranking`}</h1><p className="mt-2 text-sm leading-6 text-muted">{isVp ? "The complete eligible account book, ordered by fixed intent, value, and contact-timing rules." : "Your complete VP-published account book with policy-checked next actions."}</p></div>
-              <label className={`week-control ${!isVp ? "week-control-locked" : ""}`}><CalendarDays size={16} aria-hidden="true" /><span>Week of</span><input aria-label="Prioritization week" type="date" value={asOfDate} disabled={!isVp} onChange={(event) => setAsOfDate(event.target.value)} /></label>
+              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="queue-kicker">{isVp ? "VP workspace" : "Rep workspace"}</span>{!isVp && <span className="read-only-pill"><LockKeyhole size={12} /> Published ranking</span>}</div><h1 className="mt-2 text-[clamp(2rem,4vw,2.75rem)] font-black leading-tight tracking-[-0.045em] text-ink">{isVp ? "Account ranking" : `${persona}’s account ranking`}</h1><p className="mt-2 text-sm leading-6 text-muted">{isVp ? "The complete eligible account book, ordered by fixed intent, value, and contact-timing rules." : "Your complete VP-published ranking. Generate an AI outreach plan when you need account-specific guidance."}</p></div>
+              <label className={`week-control ${!isVp ? "week-control-locked" : ""}`}><CalendarDays size={16} aria-hidden="true" /><span>Week of</span><input aria-label="Prioritization week" type="date" value={asOfDate} disabled={!isVp} onChange={(event) => { setAsOfDate(event.target.value); setGenerationErrors(new Map()); }} /></label>
             </div>
             <div className="queue-toolbar mt-5">
               <div className="queue-source min-w-0">{isVp ? <><Database size={15} /><span className="truncate">{datasetLabel}</span><span className="hidden text-muted md:inline">· session only</span></> : <><LockKeyhole size={15} /><span>{persona} · VP-managed ranking</span></>}</div>
-              <div className="flex flex-wrap items-center gap-2"><button type="button" className="button-compact" onClick={() => setUtilityPanel("scoring")}><SlidersHorizontal size={15} /> {isVp ? "Scoring controls" : "Published scoring"}</button><button type="button" className="button-compact button-compact-accent" onClick={() => setUtilityPanel("agent")}><Bot size={15} /> Analysis status</button>{isVp && <button type="button" className="button-compact" onClick={() => setUtilityPanel("data")}><Database size={15} /> Data tools <span className="button-count">{reviewIssues.length}</span></button>}</div>
+              <div className="flex flex-wrap items-center gap-2">{isVp && <button type="button" className="button-compact button-compact-accent" onClick={generateRemainingPlans} disabled={bulkGenerating || generatingIds.size > 0 || allPlansGenerated}>{bulkGenerating ? <LoaderCircle className="animate-spin" size={15} /> : <Sparkles size={15} />} {bulkGenerating ? "Generating plans…" : allPlansGenerated ? "All plans generated" : generatedPlanCount > 0 ? "Generate remaining plans" : "Generate all plans"}</button>}<button type="button" className="button-compact" onClick={() => setUtilityPanel("scoring")}><SlidersHorizontal size={15} /> {isVp ? "Scoring controls" : "Published scoring"}</button><button type="button" className="button-compact" onClick={() => setUtilityPanel("agent")}><Bot size={15} /> AI plan status</button>{isVp && <button type="button" className="button-compact" onClick={() => setUtilityPanel("data")}><Database size={15} /> Data tools <span className="button-count">{reviewIssues.length}</span></button>}</div>
             </div>
           </div>
 
-          {activeAgentResponse.warning && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>{activeAgentResponse.source === "mixed" ? "AI coverage is partial." : "Deterministic actions are active."}</strong><span> {activeAgentResponse.warning}</span></div></div>}
           {futureEngagement && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>Future-dated engagement detected.</strong><span> Those signals are excluded and listed for review.</span></div></div>}
 
           <div className="border-b border-line px-5 pt-5 sm:px-7"><div className="filter-bar pb-5"><label className="search-field"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label><button type="button" className="button-compact filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={15} /> {filtersOpen ? "Hide filters" : "Filters"}</button>{isVp && <select aria-label="Filter by owner" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={ownerFilter} onChange={(event) => { setOwnerFilter(event.target.value); setPage(1); }}><option value="all">All owners</option>{owners.map((owner) => <option key={owner}>{owner}</option>)}</select>}<select aria-label="Filter by tier" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={tierFilter} onChange={(event) => { setTierFilter(event.target.value); setPage(1); }}><option value="all">All tiers</option>{tiers.map((tier) => <option key={tier}>{tier}</option>)}</select><select aria-label="Filter by region" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={regionFilter} onChange={(event) => { setRegionFilter(event.target.value); setPage(1); }}><option value="all">All regions</option>{regions.map((region) => <option key={region}>{region}</option>)}</select><select aria-label="Filter by industry" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={industryFilter} onChange={(event) => { setIndustryFilter(event.target.value); setPage(1); }}><option value="all">All industries</option>{industries.map((industry) => <option key={industry}>{industry}</option>)}</select><select aria-label="Filter by confidence" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={confidenceFilter} onChange={(event) => { setConfidenceFilter(event.target.value); setPage(1); }}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select></div></div>
           <div ref={tableStartRef} className="flex scroll-mt-24 items-center justify-between gap-4 px-5 py-3.5 text-xs text-muted sm:px-7"><span>Showing {pageStart}–{pageEnd} of {visible.length} eligible accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
-          <RankingTable accounts={paginatedAccounts} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
+          <RankingTable accounts={paginatedAccounts} recommendations={recommendations} generatingIds={generatingIds} generationErrors={generationErrors} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} onGenerate={generateAccountPlan} />
           <RankingPagination page={activePage} totalItems={visible.length} onPageChange={changePage} />
         </section>
       </div>
 
-      <AccountDrawer account={selected} recommendation={selectedRecommendation} issues={selectedIssues} recommendationSource={activeAgentResponse.source} onClose={() => setSelectedId(undefined)} />
-      {uploadOpen && <UploadDialog open busy={replacementBusy} onClose={() => setUploadOpen(false)} onAnalyze={(nextData, label) => prepareDataset(nextData, label, true)} />}
+      <AccountDrawer account={selected} recommendation={selectedRecommendation} generating={selected ? generatingIds.has(selected.organization.id) : false} generationError={selected ? generationErrors.get(selected.organization.id) : undefined} issues={selectedIssues} onGenerate={generateAccountPlan} onClose={() => setSelectedId(undefined)} />
+      {uploadOpen && <UploadDialog open busy={replacementBusy} onClose={() => setUploadOpen(false)} onAnalyze={(nextData, label, options) => prepareDataset(nextData, label, options, true)} />}
       {reviewOpen && <ReviewQueue open issues={reviewIssues} onClose={() => setReviewOpen(false)} />}
 
-      {utilityPanel && <div className="fixed inset-0 z-50 flex justify-end"><button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[1px]" onClick={() => setUtilityPanel(undefined)} aria-label="Dismiss workspace tools" /><aside className="utility-drawer relative h-full w-full overflow-y-auto bg-white shadow-2xl sm:max-w-[430px]" role="dialog" aria-modal="true" aria-labelledby="utility-title"><div className="utility-drawer-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-5 py-5 backdrop-blur sm:px-7"><div><p className="eyebrow">{utilityPanel === "scoring" ? "Ranking strategy" : utilityPanel === "agent" ? "Sales agent" : "CRM workspace"}</p><h2 id="utility-title" className="mt-1.5 text-2xl font-black tracking-[-0.035em] text-ink">{utilityPanel === "scoring" ? (isVp ? "Scoring controls" : "Published scoring") : utilityPanel === "agent" ? "Analysis status" : "Data tools"}</h2></div><button type="button" className="icon-button" onClick={() => setUtilityPanel(undefined)} aria-label="Close workspace tools"><X size={18} /></button></div><div className="space-y-5 p-5 sm:p-7">
-        {utilityPanel === "scoring" && (isVp ? <WeightControls weights={weights} onChange={setWeights} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your ranking uses the VP’s active strategy. Reps can inspect these weights but cannot change them.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>)}
-        {utilityPanel === "agent" && <RecommendationPanel request={agentRequest} result={activeAgentResponse} canRefresh={isVp} onResult={(response) => setAgentResult({ scopeKey: agentScopeKey, response })} />}
+      {utilityPanel && <div className="fixed inset-0 z-50 flex justify-end"><button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[1px]" onClick={() => setUtilityPanel(undefined)} aria-label="Dismiss workspace tools" /><aside className="utility-drawer relative h-full w-full overflow-y-auto bg-white shadow-2xl sm:max-w-[430px]" role="dialog" aria-modal="true" aria-labelledby="utility-title"><div className="utility-drawer-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-5 py-5 backdrop-blur sm:px-7"><div><p className="eyebrow">{utilityPanel === "scoring" ? "Ranking strategy" : utilityPanel === "agent" ? "Sales agent" : "CRM workspace"}</p><h2 id="utility-title" className="mt-1.5 text-2xl font-black tracking-[-0.035em] text-ink">{utilityPanel === "scoring" ? (isVp ? "Scoring controls" : "Published scoring") : utilityPanel === "agent" ? "AI plan status" : "Data tools"}</h2></div><button type="button" className="icon-button" onClick={() => setUtilityPanel(undefined)} aria-label="Close workspace tools"><X size={18} /></button></div><div className="space-y-5 p-5 sm:p-7">
+        {utilityPanel === "scoring" && (isVp ? <WeightControls weights={weights} onChange={(nextWeights) => { setWeights(nextWeights); setGenerationErrors(new Map()); }} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your ranking uses the VP’s active strategy. Reps can inspect these weights but cannot change them.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>)}
+        {utilityPanel === "agent" && <RecommendationPanel result={activeAgentResponse} totalAccounts={ranked.length} bulkLoading={bulkGenerating} canGenerateAll={isVp} onGenerateAll={generateRemainingPlans} />}
         {utilityPanel === "data" && <section className="data-tools-card" aria-label="Data actions"><div className="flex items-start gap-3"><span className="metric-icon"><Database size={18} /></span><div className="min-w-0"><p className="font-extrabold text-ink">{datasetLabel}</p><p className="mt-1 text-xs leading-5 text-muted">{data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows · latest engagement {data.latestEngagementDate ?? "unknown"}</p></div></div><p className="mt-5 rounded-[14px] bg-blush/60 p-3 text-xs leading-5 text-muted">Uploaded exports stay in browser memory for this session. Raw files are never persisted.</p><div className="mt-5 grid gap-2"><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setUploadOpen(true); }}><RefreshCw size={16} /> Replace account book</button><button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setReviewOpen(true); }}><ListChecks size={16} /> Review issues <span className="button-count">{reviewIssues.length}</span></button><button type="button" className="button-primary w-full" aria-label="Export full ranking" onClick={exportRanking}><Download size={16} /> Export full ranking</button></div></section>}
         <section className="utility-note"><div className="flex items-center gap-3"><span className="metric-icon"><Info size={17} /></span><p className="font-extrabold text-ink">Deterministic ranking</p></div><p className="mt-3 text-sm leading-6 text-muted">The score is a relative ordering, not a conversion prediction. AI can interpret the fixed ranking but cannot change rank or policy.</p><button type="button" className="text-link mt-4" onClick={() => { setUtilityPanel(undefined); setMethodologyOpen(true); }}>See the full methodology</button></section>
       </div></aside></div>}

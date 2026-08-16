@@ -8,7 +8,7 @@ const TIMEOUT_MS = 20_000;
 const MODEL_BATCH_SIZE = 40;
 const MODEL_CONCURRENCY = 3;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
-const RATE_LIMIT_REQUESTS = 6;
+const RATE_LIMIT_REQUESTS = 60;
 const requestsByIp = new Map<string, number[]>();
 
 export type RecommendationGenerator = (input: SalesAgentBatchRequest, signal: AbortSignal) => Promise<unknown>;
@@ -50,6 +50,9 @@ async function generateWithOpenAI(input: SalesAgentBatchRequest, signal: AbortSi
       "Never describe a score as a probability, propensity, forecast, or predicted conversion likelihood.",
       "Return each supplied account_id exactly once and do not invent accounts, events, people, products, or business context.",
       "Keep why_now and call_angle concise, concrete, and explicit about missing or warning-level evidence.",
+      "Write why_now in natural seller-facing language. Do not repeat ranks, scores, priority bands, booleans, schema names, or raw field names.",
+      "Lead why_now with observed engagement and timing. Mention a data warning only when it changes the action or confidence, and never mention that contact suppression is false or absent.",
+      "Use call_angle as a compact call plan: give the rep a grounded opener followed by one useful discovery question.",
       "Use needs_data_review or research when the supplied evidence does not support outreach. Do not recommend automated outreach.",
     ].join(" "),
     input: JSON.stringify(input),
@@ -102,6 +105,7 @@ async function generateBatch(
 function fallbackResponse(input: SalesAgentRequest, warning: string) {
   return {
     recommendations: deterministicRecommendations(input),
+    generated_account_ids: [],
     source: "fallback" as const,
     coverage: { total: input.accounts.length, ai: 0, fallback: input.accounts.length },
     warning,
@@ -125,24 +129,25 @@ export async function handleSalesAgentRequest(request: Request, dependencies: Sa
   const parsed = SalesAgentRequestSchema.safeParse(candidate);
   if (!parsed.success) return json({ error: "Recommendation payload is invalid.", details: parsed.error.issues.map((issue) => issue.message) }, 400);
   if (!dependencies.skipRateLimit && !withinRateLimit(clientIp(request), (dependencies.now ?? Date.now)())) {
-    return json(fallbackResponse(parsed.data, "Recommendation request limit reached. Showing the deterministic action plan."), 429);
+    return json(fallbackResponse(parsed.data, "AI plan request limit reached. No new plans were generated."), 429);
   }
 
   const apiKey = dependencies.apiKey ?? process.env.OPENAI_API_KEY;
-  if (!apiKey && !dependencies.generate) return json(fallbackResponse(parsed.data, "AI recommendations are not configured. Showing the deterministic action plan."));
+  if (!apiKey && !dependencies.generate) return json(fallbackResponse(parsed.data, "AI plan generation is not configured. No plans were generated."));
 
   const generate = dependencies.generate ?? ((input: SalesAgentBatchRequest, signal: AbortSignal) => generateWithOpenAI(input, signal, apiKey as string));
   const results = await runWithConcurrency(batchesFor(parsed.data), MODEL_CONCURRENCY, (batch) => generateBatch(batch, generate));
   const recommendations = results.flatMap((result) => result.recommendations);
+  const generatedAccountIds = results.filter((result) => result.source === "ai").flatMap((result) => result.recommendations.map((recommendation) => recommendation.account_id));
   const ai = results.filter((result) => result.source === "ai").reduce((total, result) => total + result.recommendations.length, 0);
   const fallback = recommendations.length - ai;
   const source = ai === recommendations.length ? "ai" : ai > 0 ? "mixed" : "fallback";
   const warning = fallback === 0
     ? undefined
     : ai > 0
-      ? `AI interpreted ${ai} of ${recommendations.length} accounts. Deterministic actions cover the remaining ${fallback}.`
+      ? `AI plans were generated for ${ai} of ${recommendations.length} accounts. The remaining ${fallback} are ready to retry.`
       : results.some((result) => result.timedOut)
-        ? "AI recommendations timed out. Showing the deterministic action plan."
-        : "AI recommendations are temporarily unavailable. Showing the deterministic action plan.";
-  return json({ recommendations, source, coverage: { total: recommendations.length, ai, fallback }, ...(warning ? { warning } : {}) });
+        ? "AI plan generation timed out. No generated plan was saved for the affected accounts."
+        : "AI plan generation is temporarily unavailable. No plans were generated.";
+  return json({ recommendations, generated_account_ids: generatedAccountIds, source, coverage: { total: recommendations.length, ai, fallback }, ...(warning ? { warning } : {}) });
 }

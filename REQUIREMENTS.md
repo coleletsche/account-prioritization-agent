@@ -10,7 +10,7 @@ Give Sales a dependable ranking of the complete eligible account book. The VP se
 - Account owner partitions rep queues. Region and industry are filters only.
 - ARR is an unconfirmed account-value proxy, not necessarily contract value or open pipeline.
 - The first-run flow requires both exports or the explicit bundled-sample shortcut. Processing, uploaded files, and agent output are session-only.
-- AI is optional and returns only `why_now`, `recommended_action`, `urgency`, `call_angle`, and `confidence`. It never scores, reorders, clears warnings, or invents evidence.
+- AI is optional and explicit: users may request one plan, generate all plans later, or opt into bulk generation at intake. It returns only `why_now`, `recommended_action`, `urgency`, `call_angle`, and `confidence`; it never scores, reorders, clears warnings, or invents evidence.
 
 ## Prioritization approach
 
@@ -24,7 +24,7 @@ Confidence is separate from score: high has no warnings, medium has usable warni
 
 ## Definition of success
 
-The supplied files reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, 360 uniquely mapped signals, and 285 eligible ranked organizations. Every eligible row receives an action; one unresolved identity remains in human review. A reviewer can explain the first rank and action in under two minutes. In production, compare contact, meeting, and opportunity rates by band and recommended action while monitoring coverage, policy overrides, stale exports, and review volume.
+The supplied files reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, 360 uniquely mapped signals, and 285 eligible ranked organizations. Every eligible row can generate an AI outreach plan, while ungenerated or failed plans remain clearly empty; one unresolved identity remains in human review. A reviewer can explain the first rank and generate its plan in under two minutes. In production, compare contact, meeting, and opportunity rates by band and recommended action while monitoring generation coverage, policy overrides, and review volume.
 
 ## Non-goals and next steps
 

@@ -45,6 +45,7 @@ describe("DataIntake", () => {
     await waitFor(() => expect(onAnalyze).toHaveBeenCalledOnce());
     expect(onAnalyze.mock.calls[0][0].statistics).toMatchObject({ sourceAccountRows: 1, sourceSignalRows: 1, resolvedOrganizations: 1, matchedSignals: 1 });
     expect(onAnalyze.mock.calls[0][1]).toBe("accounts.csv + signals.json");
+    expect(onAnalyze.mock.calls[0][2]).toEqual({ generateAllPlans: false });
   });
 
   it("loads bundled files into the same intake path without auto-starting", async () => {
@@ -58,7 +59,9 @@ describe("DataIntake", () => {
 
     expect(await screen.findByText("engagement_signals.json")).toBeInTheDocument();
     expect(onAnalyze).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Generate AI outreach plans for every account/i }));
     fireEvent.click(screen.getByRole("button", { name: "Analyze account book" }));
     await waitFor(() => expect(onAnalyze).toHaveBeenCalledOnce());
+    expect(onAnalyze.mock.calls[0][2]).toEqual({ generateAllPlans: true });
   });
 });

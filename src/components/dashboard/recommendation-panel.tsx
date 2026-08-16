@@ -1,54 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Bot, CheckCircle2, RefreshCw, ShieldCheck } from "lucide-react";
-import { SalesAgentApiResponseSchema, type SalesAgentApiResponse, type SalesAgentRequest } from "@/lib/agent";
+import { Bot, CheckCircle2, LoaderCircle, ShieldCheck, Sparkles } from "lucide-react";
+import type { SalesAgentApiResponse } from "@/lib/agent";
 
-export function RecommendationPanel({ request, result, onResult, canRefresh = true }: { request?: SalesAgentRequest; result: SalesAgentApiResponse; onResult: (result: SalesAgentApiResponse) => void; canRefresh?: boolean }) {
-  const [loading, setLoading] = useState(false);
-  const [localWarning, setLocalWarning] = useState<string>();
-  const generate = async () => {
-    if (!request || loading || !canRefresh) return;
-    setLoading(true);
-    setLocalWarning(undefined);
-    try {
-      const response = await fetch("/api/recommendations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-      const parsed = SalesAgentApiResponseSchema.safeParse(await response.json());
-      if (!parsed.success) throw new Error("The recommendation response was invalid.");
-      onResult(parsed.data);
-    } catch {
-      setLocalWarning("AI interpretation is unavailable. The deterministic action plan remains active.");
-    } finally {
-      setLoading(false);
-    }
-  };
+export function RecommendationPanel({ result, totalAccounts, bulkLoading = false, canGenerateAll = true, onGenerateAll }: { result: SalesAgentApiResponse; totalAccounts: number; bulkLoading?: boolean; canGenerateAll?: boolean; onGenerateAll: () => void }) {
+  const generated = result.generated_account_ids.length;
+  const remaining = Math.max(0, totalAccounts - generated);
+  const complete = totalAccounts > 0 && remaining === 0;
 
   return (
     <section className="agent-panel" aria-labelledby="agent-heading">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow text-white/60!">Sales agent</p>
-          <h2 id="agent-heading" className="mt-2 text-2xl font-extrabold tracking-[-0.025em] text-white">Interpret next actions</h2>
+          <h2 id="agent-heading" className="mt-2 text-2xl font-extrabold tracking-[-0.025em] text-white">AI outreach plans</h2>
         </div>
         <span className="agent-icon"><Bot size={19} /></span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-white/65">The ranking, scores, and bands stay deterministic. AI only explains why now and suggests a policy-checked action.</p>
+      <p className="mt-3 text-sm leading-6 text-white/65">Plans are generated only when requested. The fixed ranking, scores, bands, and contact policy never change.</p>
 
       <div className="mt-5 flex items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-white/5 px-3 py-2.5">
-        <span className="flex items-center gap-2 text-xs font-bold text-white/65"><ShieldCheck size={14} /> {result.coverage.total} validated accounts</span>
-        <span className={`agent-source ${result.source !== "fallback" ? "agent-source-ai" : ""}`}>{result.source === "ai" ? "AI complete" : result.source === "mixed" ? "Mixed coverage" : "Deterministic plan"}</span>
+        <span className="flex items-center gap-2 text-xs font-bold text-white/65"><ShieldCheck size={14} /> {totalAccounts} validated accounts</span>
+        <span className={`agent-source ${generated > 0 ? "agent-source-ai" : ""}`}>{complete ? "Plans complete" : generated > 0 ? "Partially generated" : "Not generated"}</span>
       </div>
 
-      <dl className="agent-coverage mt-4"><div><dt>AI interpreted</dt><dd>{result.coverage.ai}</dd></div><div><dt>Deterministic fallback</dt><dd>{result.coverage.fallback}</dd></div></dl>
+      <dl className="agent-coverage mt-4"><div><dt>AI plans</dt><dd>{generated}</dd></div><div><dt>Not generated</dt><dd>{remaining}</dd></div></dl>
 
-      {canRefresh ? <button type="button" className="button-agent mt-5 w-full" onClick={generate} disabled={!request || loading}>{loading ? <><RefreshCw className="animate-spin" size={16} /> Interpreting full account book…</> : <><RefreshCw size={16} /> Refresh account analysis</>}</button>
-        : <div className="mt-5 flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/5 p-3 text-xs font-bold text-white/65"><CheckCircle2 size={15} /> VP-managed analysis · read only</div>}
+      {canGenerateAll ? <button type="button" className="button-agent mt-5 w-full" onClick={onGenerateAll} disabled={bulkLoading || complete || totalAccounts === 0}>{bulkLoading ? <><LoaderCircle className="animate-spin" size={16} /> Generating remaining plans…</> : complete ? <><CheckCircle2 size={16} /> All plans generated</> : <><Sparkles size={16} /> {generated > 0 ? "Generate remaining plans" : "Generate all plans"}</>}</button>
+        : <div className="mt-5 flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/5 p-3 text-xs font-bold text-white/65"><CheckCircle2 size={15} /> Generate individual plans from your ranking</div>}
 
-      {(localWarning || result.warning) && <p className="mt-3 text-xs leading-5 text-[#ffd4df]" role="status">{localWarning ?? result.warning}</p>}
+      {result.warning && <p className="mt-3 text-xs leading-5 text-[#ffd4df]" role="status">{result.warning}</p>}
       <p className="mt-4 text-[0.6875rem] leading-5 text-white/40">Only validated account summaries are sent. Raw CRM files are not uploaded or persisted.</p>
     </section>
   );

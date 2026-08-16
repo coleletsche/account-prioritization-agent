@@ -6,9 +6,10 @@ import { DataImportError, processCrmExports, type EntityResolutionResult } from 
 import { useEscape } from "./use-escape";
 
 type SourceFile = { name: string; read: () => Promise<string> };
+export type AnalysisOptions = { generateAllPlans: boolean };
 
 export interface DataIntakeProps {
-  onAnalyze: (data: EntityResolutionResult, label: string) => Promise<void> | void;
+  onAnalyze: (data: EntityResolutionResult, label: string, options: AnalysisOptions) => Promise<void> | void;
   onValidatingChange?: (validating: boolean) => void;
   busy?: boolean;
   compact?: boolean;
@@ -24,6 +25,7 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
   const [error, setError] = useState<string>();
   const [validating, setValidating] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
+  const [generateAllPlans, setGenerateAllPlans] = useState(false);
 
   const ready = Boolean(accountsSource && signalsSource);
   const locked = validating || loadingSample || busy;
@@ -55,7 +57,7 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
     onValidatingChange?.(true);
     try {
       const [accounts, signals] = await Promise.all([accountsSource.read(), signalsSource.read()]);
-      await onAnalyze(processCrmExports(accounts, signals), `${accountsSource.name} + ${signalsSource.name}`);
+      await onAnalyze(processCrmExports(accounts, signals), `${accountsSource.name} + ${signalsSource.name}`, { generateAllPlans });
     } catch (cause) {
       const message = cause instanceof DataImportError
         ? `${cause.message} ${cause.issues.map((issue) => issue.evidence).join(" ")}`
@@ -96,7 +98,12 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
         </label>
       </div>
 
-      <div className="privacy-note mt-4"><ShieldCheck size={17} /><span>Raw files stay in this browser tab. Only validated account summaries are sent for AI interpretation.</span></div>
+      <label className="ai-plan-option mt-4">
+        <input type="checkbox" checked={generateAllPlans} disabled={locked} onChange={(event) => setGenerateAllPlans(event.target.checked)} />
+        <span className="ai-plan-option-icon"><Sparkles size={17} /></span>
+        <span><strong>Generate AI outreach plans for every account</strong><small>Optional · creates Why now, a recommended action, and a call plan before opening the ranking.</small></span>
+      </label>
+      <div className="privacy-note mt-4"><ShieldCheck size={17} /><span>Raw files stay in this browser tab. Validated account summaries are sent only when you generate AI plans.</span></div>
       {error && <div className="upload-error mt-4" role="alert"><strong>Analysis could not start.</strong><span>{error}</span></div>}
 
       <div className="intake-actions mt-5">
@@ -107,7 +114,7 @@ export function DataIntake({ onAnalyze, onValidatingChange, busy = false, compac
   );
 }
 
-export function UploadDialog({ open, onClose, onAnalyze, busy = false }: { open: boolean; onClose: () => void; onAnalyze: (data: EntityResolutionResult, label: string) => Promise<void> | void; busy?: boolean }) {
+export function UploadDialog({ open, onClose, onAnalyze, busy = false }: { open: boolean; onClose: () => void; onAnalyze: (data: EntityResolutionResult, label: string, options: AnalysisOptions) => Promise<void> | void; busy?: boolean }) {
   useEscape(open && !busy, onClose);
   if (!open) return null;
 

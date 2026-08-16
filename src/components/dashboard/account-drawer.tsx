@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Bot, Calendar, ExternalLink, Signal, X } from "lucide-react";
+import { AlertTriangle, Calendar, ExternalLink, LoaderCircle, Signal, Sparkles, X } from "lucide-react";
 import type { AccountRecommendation } from "@/lib/agent";
 import type { DataQualityIssue, RankedAccount } from "@/lib/data";
 import { daysBetween } from "@/lib/scoring";
@@ -15,7 +15,7 @@ function formatCurrency(value?: number) {
   return value === undefined ? "Not available" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 }
 
-export function AccountDrawer({ account, recommendation, recommendationSource = "fallback", issues = [], onClose }: { account?: RankedAccount; recommendation?: AccountRecommendation; recommendationSource?: "ai" | "mixed" | "fallback"; issues?: DataQualityIssue[]; onClose: () => void }) {
+export function AccountDrawer({ account, recommendation, generating = false, generationError, issues = [], onGenerate, onClose }: { account?: RankedAccount; recommendation?: AccountRecommendation; generating?: boolean; generationError?: string; issues?: DataQualityIssue[]; onGenerate: (account: RankedAccount) => void; onClose: () => void }) {
   useEscape(Boolean(account), onClose);
   if (!account) return null;
   const { organization } = account;
@@ -47,9 +47,15 @@ export function AccountDrawer({ account, recommendation, recommendationSource = 
           </section>
 
           {recommendation && <section className="agent-recommendation" aria-labelledby="recommendation-heading">
-            <div className="flex items-start justify-between gap-4"><div className="flex items-center gap-3"><span className="metric-icon"><Bot size={17} /></span><div><h3 id="recommendation-heading" className="section-title">Recommended next action</h3><p className="mt-1 text-xs text-muted">{recommendationSource === "ai" ? "AI interpreted · policy checked" : recommendationSource === "mixed" ? "Policy checked · mixed coverage" : "Deterministic action plan"}</p></div></div><span className={`action-pill action-${recommendation.recommended_action}`}>{recommendation.recommended_action.replaceAll("_", " ")}</span></div>
-            <dl className="mt-5 space-y-4 text-sm"><div><dt className="font-extrabold text-ink">Why now</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.why_now}</dd></div><div><dt className="font-extrabold text-ink">Call angle</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.call_angle}</dd></div></dl>
+            <div className="flex items-start justify-between gap-4"><div className="flex items-center gap-3"><span className="metric-icon"><Sparkles size={17} /></span><div><h3 id="recommendation-heading" className="section-title">AI outreach plan</h3><p className="mt-1 text-xs text-muted">AI generated · policy checked</p></div></div><span className={`action-pill action-${recommendation.recommended_action}`}>{recommendation.recommended_action.replaceAll("_", " ")}</span></div>
+            <dl className="mt-5 space-y-4 text-sm"><div><dt className="font-extrabold text-ink">Why now</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.why_now}</dd></div><div><dt className="font-extrabold text-ink">Call plan</dt><dd className="mt-1.5 leading-6 text-muted">{recommendation.call_angle}</dd></div></dl>
             <p className="mt-4 text-xs capitalize text-muted">Urgency: {recommendation.urgency} · Agent confidence: {recommendation.confidence}</p>
+          </section>}
+
+          {!recommendation && <section className="agent-recommendation agent-recommendation-empty" aria-labelledby="recommendation-heading">
+            <span className="metric-icon"><Sparkles size={17} /></span>
+            <div><h3 id="recommendation-heading" className="section-title">Generate an AI outreach plan</h3><p className="mt-1.5 text-sm leading-6 text-muted">Create a grounded Why now, recommended action, and call plan from this account’s validated CRM and engagement evidence.</p>{generationError && <p className="mt-2 text-xs font-bold text-[#9f2348]" role="status">{generationError}</p>}</div>
+            <button type="button" className="button-primary" disabled={generating} onClick={() => onGenerate(account)}>{generating ? <LoaderCircle className="animate-spin" size={16} /> : <Sparkles size={16} />} {generating ? "Generating plan…" : generationError ? "Retry AI plan" : "Generate AI plan"}</button>
           </section>}
 
           <section aria-labelledby="factor-heading">

@@ -19,27 +19,28 @@ function recommendationFor(account: { account_id: string; account_name: string; 
   };
 }
 
-async function mockDeterministicAgent(page: Page) {
+async function mockAgent(page: Page) {
   await page.route("**/api/recommendations", async (route) => {
     const body = route.request().postDataJSON();
-    const recommendations = body.accounts.map((account: Parameters<typeof recommendationFor>[0]) => recommendationFor(account, "fallback"));
+    const recommendations = body.accounts.map((account: Parameters<typeof recommendationFor>[0]) => recommendationFor(account, "ai"));
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       recommendations,
-      source: "fallback",
-      coverage: { total: recommendations.length, ai: 0, fallback: recommendations.length },
-      warning: "AI recommendations are not configured. Showing the deterministic action plan.",
+      generated_account_ids: recommendations.map((recommendation: { account_id: string }) => recommendation.account_id),
+      source: "ai",
+      coverage: { total: recommendations.length, ai: recommendations.length, fallback: 0 },
     }) });
   });
 }
 
-async function openDashboard(page: Page, options: { installDefaultAgentMock?: boolean } = {}) {
-  if (options.installDefaultAgentMock !== false) await mockDeterministicAgent(page);
+async function openDashboard(page: Page, options: { installDefaultAgentMock?: boolean; generateAllPlans?: boolean } = {}) {
+  if (options.installDefaultAgentMock !== false) await mockAgent(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Prepare this account book" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Return to account preparation" })).toHaveCount(0);
   await expect(page.getByLabel("Select persona")).toHaveCount(0);
   await page.getByRole("button", { name: "Use sample data" }).click();
   await expect(page.getByText("engagement_signals.json", { exact: true })).toBeVisible();
+  if (options.generateAllPlans) await page.getByRole("checkbox", { name: /Generate AI outreach plans for every account/i }).check();
   await page.getByRole("button", { name: "Analyze account book" }).click();
   await expect(page.getByRole("heading", { name: "Account ranking", exact: true })).toBeVisible();
 }
@@ -63,8 +64,12 @@ test("starts with intake, analyzes the full supplied account book, and preserves
   await expect(page.getByTestId("ranking-table").locator("tbody tr").first().locator(".rank-number")).toHaveText("26");
   await page.getByRole("button", { name: "Previous page" }).click();
   const firstRow = page.getByTestId("ranking-table").locator("tbody tr").first();
-  await expect(firstRow.locator("td").nth(4)).not.toContainText(/immediate|high/i);
+  await expect(firstRow.locator("td").nth(3)).toContainText("Generate AI plan");
+  await expect(firstRow.locator("td").nth(3)).not.toContainText(/P0 at|deterministic/i);
   expect(await firstRow.locator(".owner-chip").evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+  await firstRow.getByRole("button", { name: "Generate AI plan" }).click();
+  await expect(firstRow.locator("td").nth(3)).toContainText("AI generated");
+  await expect(firstRow.locator("td").nth(3)).toContainText("AI interpretation for");
 
   const defaultOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
   await page.getByRole("button", { name: "Scoring controls", exact: true }).click();
@@ -73,6 +78,7 @@ test("starts with intake, analyzes the full supplied account book, and preserves
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("0%");
   const rerankedOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
   expect(rerankedOrder).not.toEqual(defaultOrder);
+  await expect(page.getByTestId("ranking-table").getByRole("button", { name: "Generate AI plan" }).first()).toBeVisible();
   await page.getByLabel("Reset score weights").click();
   await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
 
@@ -86,9 +92,9 @@ test("starts with intake, analyzes the full supplied account book, and preserves
   await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
   await expect(page.getByRole("button", { name: "Replace account book", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Prioritization week")).toBeDisabled();
-  await page.getByRole("button", { name: "Analysis status", exact: true }).click();
-  await expect(page.getByText("VP-managed analysis · read only", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Refresh account analysis", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "AI plan status", exact: true }).click();
+  await expect(page.getByText("Generate individual plans from your ranking", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Generate all plans", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
 
   await page.getByTestId("ranking-table").locator("tbody tr").first().getByRole("button").first().click();
@@ -136,7 +142,7 @@ test("keeps failed replacements atomic and analyzes a valid replacement", async 
   expect(errors).toEqual([]);
 });
 
-test("exposes held-out records and exports every ranked account with an action", async ({ page }) => {
+test("exposes held-out records and exports every ranked account", async ({ page }) => {
   await openDashboard(page);
   await page.getByRole("button", { name: /Data tools/i }).click();
   await page.getByRole("button", { name: /Review issues/i }).click();
@@ -156,38 +162,39 @@ test("exposes held-out records and exports every ranked account with an action",
   expect(csv.trim().split("\n")).toHaveLength(286);
 });
 
-test("shows complete, partial, and fallback analysis without reranking", async ({ page }) => {
+test("supports optional bulk generation, partial coverage, and retry without reranking", async ({ page }) => {
   let requestCount = 0;
   await page.route("**/api/recommendations", async (route) => {
     requestCount += 1;
     const body = route.request().postDataJSON();
     expect(body.prompt).toBeUndefined();
-    expect(body.accounts.length).toBe(285);
-    const source = requestCount === 1 ? "ai" : "mixed";
-    const ai = source === "ai" ? body.accounts.length : 200;
+    expect(body.accounts.length).toBe(requestCount === 1 ? 285 : 85);
+    const source = requestCount === 1 ? "mixed" : "ai";
+    const ai = requestCount === 1 ? 200 : body.accounts.length;
     const recommendations = body.accounts.map((account: Parameters<typeof recommendationFor>[0], index: number) => recommendationFor(account, index < ai ? "ai" : "fallback"));
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       recommendations,
+      generated_account_ids: recommendations.slice(0, ai).map((recommendation: { account_id: string }) => recommendation.account_id),
       source,
       coverage: { total: recommendations.length, ai, fallback: recommendations.length - ai },
-      ...(source === "mixed" ? { warning: `AI interpreted ${ai} of ${recommendations.length} accounts.` } : {}),
+      ...(source === "mixed" ? { warning: `AI plans were generated for ${ai} of ${recommendations.length} accounts.` } : {}),
     }) });
   });
 
-  await openDashboard(page, { installDefaultAgentMock: false });
+  await openDashboard(page, { installDefaultAgentMock: false, generateAllPlans: true });
   const leader = await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText();
   await expect(page.getByTestId("ranking-table").locator("tbody tr").first()).toContainText("AI interpretation for");
-  await page.getByRole("button", { name: "Analysis status", exact: true }).click();
-  await expect(page.locator(".agent-source")).toHaveText(/AI complete/i);
-  await page.getByRole("button", { name: "Refresh account analysis", exact: true }).click();
-  await expect(page.locator(".agent-source")).toHaveText(/Mixed coverage/i);
-  await expect(page.getByLabel("Analysis status").getByText("200", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "AI plan status", exact: true }).click();
+  await expect(page.locator(".agent-source")).toHaveText(/Partially generated/i);
+  await expect(page.getByRole("dialog").getByText("200", { exact: true })).toBeVisible();
+  await page.getByRole("dialog").getByRole("button", { name: "Generate remaining plans", exact: true }).click();
+  await expect(page.locator(".agent-source")).toHaveText(/Plans complete/i);
   expect(await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText()).toBe(leader);
 });
 
 test("supports the complete intake and ranking flow at 390px without page overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await mockDeterministicAgent(page);
+  await mockAgent(page);
   await page.goto("/");
   await expect(page.getByAltText("Velora")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
