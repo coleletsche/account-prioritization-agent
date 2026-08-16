@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarDays, Database, Download, FileWarning, Info, ListChecks, LockKeyhole, RefreshCw, Search, Signal, SlidersHorizontal, UserRoundCheck, Users } from "lucide-react";
+import { AlertTriangle, Bot, CalendarDays, Database, Download, FileWarning, Info, ListChecks, LockKeyhole, RefreshCw, Search, SlidersHorizontal, UserRoundCheck, X } from "lucide-react";
 import { buildSalesAgentRequest, deterministicRecommendations, type SalesAgentApiResponse } from "@/lib/agent";
 import { processCrmExports, type EntityResolutionResult, type RankedAccount, type ScoreWeights } from "@/lib/data";
 import { buildRankingCsv, rankingFilename } from "@/lib/export";
@@ -17,10 +17,7 @@ import { useEscape } from "./use-escape";
 import { WeightControls } from "./weight-controls";
 
 const DEFAULT_WEEK = "2026-08-17";
-
-function metric(value: string, label: string, detail: string, icon: React.ReactNode, tone = "default", onClick?: () => void) {
-  return { value, label, detail, icon, tone, onClick };
-}
+type UtilityPanel = "scoring" | "agent" | "data";
 
 export function AccountDashboard() {
   const [data, setData] = useState<EntityResolutionResult>();
@@ -34,13 +31,16 @@ export function AccountDashboard() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [industryFilter, setIndustryFilter] = useState("all");
   const [confidenceFilter, setConfidenceFilter] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [utilityPanel, setUtilityPanel] = useState<UtilityPanel>();
   const [datasetLabel, setDatasetLabel] = useState("Bundled assessment data");
   const [agentResult, setAgentResult] = useState<{ scopeKey: string; response: SalesAgentApiResponse }>();
   useEscape(methodologyOpen, () => setMethodologyOpen(false));
+  useEscape(Boolean(utilityPanel), () => setUtilityPanel(undefined));
 
   useEffect(() => {
     let current = true;
@@ -93,16 +93,6 @@ export function AccountDashboard() {
   const freshnessDays = data.latestEngagementDate ? daysBetween(data.latestEngagementDate, asOfDate) : undefined;
   const stale = freshnessDays !== undefined && freshnessDays > 14;
   const futureEngagement = freshnessDays !== undefined && freshnessDays < 0;
-  const signalCoverage = personaAccounts.length === 0 ? 0 : Math.round((personaAccounts.filter((account) => account.organization.engagements.length > 0).length / personaAccounts.length) * 100);
-  const personaSignalRows = personaAccounts.reduce((total, account) => total + account.organization.engagements.length, 0);
-  const metrics = [
-    metric(String(isVp ? ranked.length : Math.min(10, personaAccounts.length)), isVp ? "eligible accounts" : "accounts in your queue", isVp ? `${data.statistics.excludedOrganizations} held for review` : `${personaAccounts.length} eligible accounts owned by ${persona}`, <Users size={19} />),
-    metric(data.latestEngagementDate ?? "—", "latest engagement", stale ? `${freshnessDays} days before this week` : futureEngagement ? `${Math.abs(freshnessDays)} days after this week · review` : "Source data is current", <CalendarDays size={19} />, stale || futureEngagement ? "warning" : "default"),
-    metric(`${signalCoverage}%`, "signal coverage", `${isVp ? data.statistics.matchedSignals : personaSignalRows} matched engagement rows`, <Signal size={19} />),
-    isVp
-      ? metric(String(reviewIssues.length), "quality flags", "Open the categorized review queue", <FileWarning size={19} />, "default", () => setReviewOpen(true))
-      : metric("Locked", "scoring strategy", "Published and managed by the VP persona", <LockKeyhole size={19} />),
-  ];
 
   const exportRanking = () => {
     const csv = buildRankingCsv(ranked, { asOfDate, weights, reviewIssues, recommendations });
@@ -124,6 +114,7 @@ export function AccountDashboard() {
     setRegionFilter("all");
     setIndustryFilter("all");
     setConfidenceFilter("all");
+    setFiltersOpen(false);
     setSelectedId(undefined);
     setUploadOpen(false);
   };
@@ -136,7 +127,9 @@ export function AccountDashboard() {
     setRegionFilter("all");
     setIndustryFilter("all");
     setConfidenceFilter("all");
+    setFiltersOpen(false);
     setSelectedId(undefined);
+    setUtilityPanel(undefined);
   };
 
   return (
@@ -158,69 +151,90 @@ export function AccountDashboard() {
                 {owners.map((owner) => <option key={owner} value={owner}>{owner}</option>)}
               </select>
             </label>
-            <span className="status-pill hidden md:inline-flex">Week of {asOfDate.slice(5)}</span>
           </div>
         </div>
       </header>
 
-      <div className="page-shell py-9 sm:py-12">
-        <section className="grid items-end gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div>
-            <p className="eyebrow">Daily sales agent</p>
-            <h1 className="mt-4 max-w-4xl text-[clamp(2.75rem,5vw,4rem)] font-black leading-[0.98] tracking-[-0.05em] text-ink">Know who to call <span className="text-brand">first.</span></h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">A deterministic account ranking with policy-checked AI interpretation—so every rep knows why an account matters and what to do next.</p>
-          </div>
-          <div className={`date-control ${!isVp ? "date-control-locked" : ""}`}><div><p className="text-xs font-bold uppercase tracking-[0.1em] text-muted">Prioritization week</p><p className="mt-1 text-sm text-ink">{isVp ? "Signals decay relative to this date." : "Set by the VP for this published queue."}</p></div><input aria-label="Prioritization week" type="date" value={asOfDate} disabled={!isVp} onChange={(event) => setAsOfDate(event.target.value)} /></div>
-        </section>
+      <div className="page-shell py-5 sm:py-7">
+        <section className="queue-workspace min-w-0 overflow-hidden rounded-card border border-line bg-white shadow-card">
+          <div className="queue-heading border-b border-line px-5 py-5 sm:px-7 sm:py-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="queue-kicker">{isVp ? "VP workspace" : "Rep workspace"}</span>
+                  {!isVp && <span className="read-only-pill"><LockKeyhole size={12} /> Read only</span>}
+                </div>
+                <h1 className="mt-2 text-[clamp(2rem,4vw,2.75rem)] font-black leading-tight tracking-[-0.045em] text-ink">{isVp ? "Team daily queue" : `${persona}’s daily call queue`}</h1>
+                <p className="mt-2 text-sm leading-6 text-muted">{isVp ? "Global Top 25—filter by owner for each rep’s daily Top 10." : "Your VP-published Top 10, with fixed scores and policy-checked next actions."}</p>
+              </div>
+              <label className={`week-control ${!isVp ? "week-control-locked" : ""}`}>
+                <CalendarDays size={16} aria-hidden="true" />
+                <span>Week of</span>
+                <input aria-label="Prioritization week" type="date" value={asOfDate} disabled={!isVp} onChange={(event) => setAsOfDate(event.target.value)} />
+              </label>
+            </div>
 
-        {stale && <div className="stale-banner mt-7" role="status"><AlertTriangle size={18} /><div><strong>Engagement data is stale for this call week.</strong><span> The latest signal is {freshnessDays} days old, so confirm the CRM export before acting.</span></div></div>}
-        {futureEngagement && <div className="stale-banner mt-7" role="status"><AlertTriangle size={18} /><div><strong>Some engagement is dated after this call week.</strong><span> Future signals are excluded from intent scoring and listed in the review queue.</span></div></div>}
-
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Data overview">
-          {metrics.map((item) => item.onClick ? <button type="button" onClick={item.onClick} key={item.label} className={`overview-card overview-card-button text-left ${item.tone === "warning" ? "overview-warning" : ""}`}><div className="flex items-start justify-between gap-3"><p className="text-[1.75rem] font-black tracking-[-0.04em] text-ink">{item.value}</p><span className="metric-icon">{item.icon}</span></div><p className="mt-4 text-sm font-extrabold text-ink">{item.label}</p><p className="mt-1 text-xs leading-5 text-muted">{item.detail}</p></button> : <article key={item.label} className={`overview-card ${item.tone === "warning" ? "overview-warning" : ""}`}><div className="flex items-start justify-between gap-3"><p className="text-[1.75rem] font-black tracking-[-0.04em] text-ink">{item.value}</p><span className="metric-icon">{item.icon}</span></div><p className="mt-4 text-sm font-extrabold text-ink">{item.label}</p><p className="mt-1 text-xs leading-5 text-muted">{item.detail}</p></article>)}
-        </section>
-
-        {isVp ? <section className="mt-6 flex flex-col gap-3 rounded-[18px] border border-line bg-white px-4 py-3 shadow-card sm:flex-row sm:items-center sm:justify-between" aria-label="Data actions">
-          <div className="min-w-0"><p className="truncate text-sm font-extrabold text-ink">{datasetLabel}</p><p className="mt-0.5 text-xs text-muted">Session only · raw files never leave this browser</p></div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="button-compact" onClick={() => setUploadOpen(true)}><RefreshCw size={15} /> Refresh data</button>
-            <button type="button" className="button-compact" onClick={() => setReviewOpen(true)}><ListChecks size={15} /> Review issues</button>
-            <button type="button" className="button-compact button-compact-primary" onClick={exportRanking}><Download size={15} /> Export full ranking</button>
-          </div>
-        </section> : <section className="rep-access-bar mt-6" aria-label="Persona access notice">
-          <div className="flex min-w-0 items-center gap-3"><span className="metric-icon"><LockKeyhole size={17} /></span><div className="min-w-0"><p className="truncate text-sm font-extrabold text-ink">{persona} workspace</p><p className="mt-0.5 text-xs text-muted">Read-only SDR persona · ranking strategy and source data are managed by the VP</p></div></div>
-          <span className="status-pill inline-flex">MVP view simulation</span>
-        </section>}
-
-        <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <section className="min-w-0 rounded-card border border-line bg-white shadow-card">
-            <div className="border-b border-line px-5 pt-5 sm:px-7 sm:pt-7">
-              <div><p className="eyebrow">Prioritized accounts</p><h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-ink">{isVp ? "Team daily queue" : `${persona}’s daily call queue`}</h2><p className="mt-2 text-sm text-muted">{isVp ? "Review the global Top 25 or choose an owner to see their daily Top 10." : "Your VP-published Top 10 with deterministic priority and interpreted next actions."}</p></div>
-
-              <div className="mt-6 grid gap-3 pb-5 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="search-field lg:col-span-2"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-                {isVp && <select aria-label="Filter by owner" className="filter-select" value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}><option value="all">All owners</option>{owners.map((owner) => <option key={owner}>{owner}</option>)}</select>}
-                <select aria-label="Filter by tier" className="filter-select" value={tierFilter} onChange={(event) => setTierFilter(event.target.value)}><option value="all">All tiers</option>{tiers.map((tier) => <option key={tier}>{tier}</option>)}</select>
-                <select aria-label="Filter by region" className="filter-select" value={regionFilter} onChange={(event) => setRegionFilter(event.target.value)}><option value="all">All regions</option>{regions.map((region) => <option key={region}>{region}</option>)}</select>
-                <select aria-label="Filter by industry" className="filter-select" value={industryFilter} onChange={(event) => setIndustryFilter(event.target.value)}><option value="all">All industries</option>{industries.map((industry) => <option key={industry}>{industry}</option>)}</select>
-                <select aria-label="Filter by confidence" className="filter-select" value={confidenceFilter} onChange={(event) => setConfidenceFilter(event.target.value)}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select>
+            <div className="queue-toolbar mt-5">
+              <div className="queue-source min-w-0">
+                {isVp ? <><Database size={15} /><span className="truncate">{datasetLabel}</span><span className="hidden text-muted md:inline">· session only</span></> : <><LockKeyhole size={15} /><span>{persona} · VP-managed ranking</span></>}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className="button-compact" onClick={() => setUtilityPanel("scoring")}><SlidersHorizontal size={15} /> {isVp ? "Scoring controls" : "Published scoring"}</button>
+                <button type="button" className="button-compact button-compact-accent" onClick={() => setUtilityPanel("agent")}><Bot size={15} /> Agent actions</button>
+                {isVp && <button type="button" className="button-compact" onClick={() => setUtilityPanel("data")}><Database size={15} /> Data tools <span className="button-count">{reviewIssues.length}</span></button>}
               </div>
             </div>
-            <div className="flex items-center justify-between gap-4 px-5 py-4 text-xs text-muted sm:px-7"><span>Showing {visible.length} of {isVp && ownerFilter === "all" ? Math.min(25, ranked.length) : Math.min(10, personaAccounts.length)} prioritized accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
-            <RankingTable accounts={visible} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
-          </section>
+          </div>
 
-          <aside className="space-y-6">
-            {isVp ? <WeightControls weights={weights} onChange={setWeights} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your queue uses the VP’s active strategy. Switch to the VP persona to preview the controls.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>}
-            <RecommendationPanel request={agentRequest} result={activeAgentResponse} onResult={(response) => setAgentResult({ scopeKey: agentScopeKey, response })} />
-            <section className="method-card"><div className="flex items-center gap-3"><span className="metric-icon"><SlidersHorizontal size={18} /></span><p className="font-extrabold text-ink">What this score means</p></div><p className="mt-4 text-sm leading-6 text-muted">It is a relative weekly ordering—not a prediction. Every point comes from visible CRM fields and matched engagement.</p><button type="button" className="text-link mt-5" onClick={() => setMethodologyOpen(true)}>See the full methodology</button></section>
-          </aside>
-        </div>
+          {stale && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>Engagement data is stale.</strong><span> Latest signal is {freshnessDays} days old; confirm the export before acting.</span></div></div>}
+          {futureEngagement && <div className="queue-warning" role="status"><AlertTriangle size={17} /><div><strong>Future-dated engagement detected.</strong><span> Those signals are excluded and listed for review.</span></div></div>}
+
+          <div className="border-b border-line px-5 pt-5 sm:px-7">
+              <div className="filter-bar pb-5">
+                <label className="search-field"><Search size={16} aria-hidden="true" /><input aria-label="Search accounts" placeholder="Search accounts or aliases" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+                <button type="button" className="button-compact filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={15} /> {filtersOpen ? "Hide filters" : "Filters"}</button>
+                {isVp && <select aria-label="Filter by owner" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}><option value="all">All owners</option>{owners.map((owner) => <option key={owner}>{owner}</option>)}</select>}
+                <select aria-label="Filter by tier" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={tierFilter} onChange={(event) => setTierFilter(event.target.value)}><option value="all">All tiers</option>{tiers.map((tier) => <option key={tier}>{tier}</option>)}</select>
+                <select aria-label="Filter by region" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={regionFilter} onChange={(event) => setRegionFilter(event.target.value)}><option value="all">All regions</option>{regions.map((region) => <option key={region}>{region}</option>)}</select>
+                <select aria-label="Filter by industry" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={industryFilter} onChange={(event) => setIndustryFilter(event.target.value)}><option value="all">All industries</option>{industries.map((industry) => <option key={industry}>{industry}</option>)}</select>
+                <select aria-label="Filter by confidence" className={`filter-select filter-mobile-collapse ${filtersOpen ? "filter-mobile-open" : ""}`} value={confidenceFilter} onChange={(event) => setConfidenceFilter(event.target.value)}><option value="all">All confidence</option><option value="high">High confidence</option><option value="medium">Medium confidence</option><option value="low">Low confidence</option></select>
+              </div>
+          </div>
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5 text-xs text-muted sm:px-7"><span>Showing {visible.length} of {isVp && ownerFilter === "all" ? Math.min(25, ranked.length) : Math.min(10, personaAccounts.length)} prioritized accounts</span>{isVp && <span className="hidden items-center gap-1.5 sm:flex"><Database size={13} /> {data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows</span>}</div>
+          <RankingTable accounts={visible} recommendations={recommendations} showGlobalRank={isVp} onSelect={(account: RankedAccount) => setSelectedId(account.organization.id)} />
+        </section>
       </div>
 
       <AccountDrawer account={selected} recommendation={selectedRecommendation} issues={selectedIssues} recommendationSource={activeAgentResponse.source} onClose={() => setSelectedId(undefined)} />
       {uploadOpen && <UploadDialog open onClose={() => setUploadOpen(false)} onApply={applyUpload} />}
       {reviewOpen && <ReviewQueue open issues={reviewIssues} onClose={() => setReviewOpen(false)} />}
+
+      {utilityPanel && <div className="fixed inset-0 z-50 flex justify-end">
+        <button type="button" className="absolute inset-0 bg-ink/45 backdrop-blur-[1px]" onClick={() => setUtilityPanel(undefined)} aria-label="Dismiss workspace tools" />
+        <aside className="utility-drawer relative h-full w-full overflow-y-auto bg-white shadow-2xl sm:max-w-[430px]" role="dialog" aria-modal="true" aria-labelledby="utility-title">
+          <div className="utility-drawer-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-5 py-5 backdrop-blur sm:px-7">
+            <div>
+              <p className="eyebrow">{utilityPanel === "scoring" ? "Queue strategy" : utilityPanel === "agent" ? "Sales agent" : "CRM workspace"}</p>
+              <h2 id="utility-title" className="mt-1.5 text-2xl font-black tracking-[-0.035em] text-ink">{utilityPanel === "scoring" ? (isVp ? "Scoring controls" : "Published scoring") : utilityPanel === "agent" ? "Agent actions" : "Data tools"}</h2>
+            </div>
+            <button type="button" className="icon-button" onClick={() => setUtilityPanel(undefined)} aria-label="Close workspace tools"><X size={18} /></button>
+          </div>
+          <div className="space-y-5 p-5 sm:p-7">
+            {utilityPanel === "scoring" && (isVp ? <WeightControls weights={weights} onChange={setWeights} /> : <section className="published-strategy-card" aria-label="Published scoring strategy"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="metric-icon"><LockKeyhole size={18} /></span><div><p className="font-extrabold text-ink">Published scoring</p><p className="mt-0.5 text-xs font-bold text-brand">Read only</p></div></div></div><p className="mt-5 text-sm leading-6 text-muted">Your queue uses the VP’s active strategy. Reps can inspect these weights but cannot change them.</p><dl className="mt-5 grid grid-cols-3 gap-2">{[["Intent", weights.intent], ["Value", weights.value], ["Timing", weights.timing]].map(([label, value]) => <div key={label} className="published-weight"><dt>{label}</dt><dd>{value}%</dd></div>)}</dl></section>)}
+            {utilityPanel === "agent" && <RecommendationPanel request={agentRequest} result={activeAgentResponse} onResult={(response) => setAgentResult({ scopeKey: agentScopeKey, response })} />}
+            {utilityPanel === "data" && <section className="data-tools-card" aria-label="Data actions">
+              <div className="flex items-start gap-3"><span className="metric-icon"><Database size={18} /></span><div className="min-w-0"><p className="font-extrabold text-ink">{datasetLabel}</p><p className="mt-1 text-xs leading-5 text-muted">{data.statistics.sourceAccountRows + data.statistics.sourceSignalRows} source rows · latest engagement {data.latestEngagementDate ?? "unknown"}</p></div></div>
+              <p className="mt-5 rounded-[14px] bg-blush/60 p-3 text-xs leading-5 text-muted">Uploaded exports stay in browser memory for this session. Raw CRM files are never persisted.</p>
+              <div className="mt-5 grid gap-2">
+                <button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setUploadOpen(true); }}><RefreshCw size={16} /> Refresh data</button>
+                <button type="button" className="button-secondary w-full" onClick={() => { setUtilityPanel(undefined); setReviewOpen(true); }}><ListChecks size={16} /> Review issues <span className="button-count">{reviewIssues.length}</span></button>
+                <button type="button" className="button-primary w-full" aria-label="Export full ranking" onClick={exportRanking}><Download size={16} /> Export full ranking</button>
+              </div>
+            </section>}
+            <section className="utility-note"><div className="flex items-center gap-3"><span className="metric-icon"><Info size={17} /></span><p className="font-extrabold text-ink">Deterministic ranking</p></div><p className="mt-3 text-sm leading-6 text-muted">The score is a relative ordering, not a conversion prediction. AI can interpret the fixed queue but cannot change rank or policy.</p><button type="button" className="text-link mt-4" onClick={() => { setUtilityPanel(undefined); setMethodologyOpen(true); }}>See the full methodology</button></section>
+          </div>
+        </aside>
+      </div>}
 
       {methodologyOpen && <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><button type="button" className="absolute inset-0 bg-ink/55" onClick={() => setMethodologyOpen(false)} aria-label="Dismiss methodology" /><section className="relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-card bg-white p-7 shadow-2xl sm:p-9" role="dialog" aria-modal="true" aria-labelledby="method-title"><p className="eyebrow">Transparent by design</p><h2 id="method-title" className="mt-3 text-3xl font-black tracking-[-0.04em] text-ink">How the priority agent works</h2><div className="mt-7 grid gap-4 sm:grid-cols-3">{[["Intent", "Event strength × log frequency × 30-day decay, with a small capped signal-breadth multiplier."], ["Account score", "Available tier and ARR value plus contact staleness; unknown inputs stay unknown and are omitted."], ["AI interpretation", "Explains why now and suggests an action after deterministic score, identity, suppression, and quality policy are fixed."]].map(([title, body]) => <article className="method-factor" key={title}><h3>{title}</h3><p>{body}</p></article>)}</div><div className="mt-6 rounded-[18px] bg-blush p-5 text-sm leading-6 text-ink"><strong>Important:</strong> ARR is an unconfirmed account-value proxy. P0/P1/P2/P3 are fixed score bands, not conversion probabilities. The LLM cannot score, rank, clear warnings, or bypass contact suppression.</div><p className="mt-5 text-xs leading-5 text-muted">Persona switching demonstrates the intended VP and SDR experiences in this MVP. It is not an authentication or authorization boundary; production access would require identity, RBAC, and server-side enforcement.</p><button type="button" className="button-primary mt-7 w-full" onClick={() => setMethodologyOpen(false)}>Back to the call list</button></section></div>}
     </main>

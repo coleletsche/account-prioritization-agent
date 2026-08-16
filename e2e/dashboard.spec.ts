@@ -23,11 +23,12 @@ function watchRuntimeErrors(page: Page) {
 test("loads the supplied ranking and supports VP, SDR, reranking, and account evidence", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await openDashboard(page);
-  await expect(page.getByText("285", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("2026-07-28", { exact: true })).toBeVisible();
+  await expect(page.getByText("Know who to call first.", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Data overview")).toHaveCount(0);
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(25);
 
   const defaultOrder = await page.getByTestId("ranking-table").locator("tbody tr .account-link").allTextContents();
+  await page.getByRole("button", { name: "Scoring controls", exact: true }).click();
   await page.getByLabel("Intent weight").fill("0");
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("0%");
   await expect(page.getByLabel("Reset score weights")).toBeEnabled();
@@ -36,19 +37,24 @@ test("loads the supplied ranking and supports VP, SDR, reranking, and account ev
   await page.getByLabel("Reset score weights").click();
   await expect(page.locator(".weight-panel output").nth(0)).toHaveText("55%");
   await expect(page.getByLabel("Reset score weights")).toBeDisabled();
+  await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
 
   await page.getByLabel("Select persona").selectOption("Rep A");
   await expect(page.getByText("Rep A’s daily call queue", { exact: true })).toBeVisible();
   await expect(page.getByTestId("ranking-table").locator("tbody tr")).toHaveCount(10);
+  await page.getByRole("button", { name: "Published scoring", exact: true }).click();
   await expect(page.getByLabel("Published scoring strategy")).toContainText("Intent55%");
   await expect(page.getByLabel("Intent weight")).toHaveCount(0);
   await expect(page.getByLabel("Reset score weights")).toHaveCount(0);
+  await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
   await expect(page.getByRole("button", { name: "Generate briefing", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Refresh data", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Review issues", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Export full ranking", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Prioritization week")).toBeDisabled();
+  await page.getByRole("button", { name: "Agent actions", exact: true }).click();
   await expect(page.getByRole("button", { name: "Interpret daily queues", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close workspace tools", exact: true }).click();
 
   await page.getByTestId("ranking-table").locator("tbody tr").first().getByRole("button").first().click();
   await expect(page.getByRole("dialog").getByText("Factor breakdown", { exact: true })).toBeVisible();
@@ -63,6 +69,7 @@ test("keeps failed uploads atomic and applies a validated two-file refresh", asy
   await openDashboard(page);
   const baselineLeader = await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText();
 
+  await page.getByRole("button", { name: /Data tools/i }).click();
   await page.getByRole("button", { name: "Refresh data", exact: true }).click();
   await page.getByLabel("Account CSV file").setInputFiles(invalidAccountsPath);
   await page.getByLabel("Engagement JSON file").setInputFiles(signalsPath);
@@ -71,6 +78,7 @@ test("keeps failed uploads atomic and applies a validated two-file refresh", asy
   await page.getByLabel("Close data refresh").click();
   expect(await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText()).toBe(baselineLeader);
 
+  await page.getByRole("button", { name: /Data tools/i }).click();
   await page.getByRole("button", { name: "Refresh data", exact: true }).click();
   await page.getByLabel("Account CSV file").setInputFiles(accountsPath);
   await page.getByLabel("Engagement JSON file").setInputFiles(signalsPath);
@@ -80,6 +88,7 @@ test("keeps failed uploads atomic and applies a validated two-file refresh", asy
   await page.getByRole("button", { name: "Use this export", exact: true }).click();
   await expect(page.getByText("accounts.csv + engagement_signals.json", { exact: true })).toBeVisible();
 
+  await page.getByRole("button", { name: /Data tools/i }).click();
   await page.getByRole("button", { name: "Refresh data", exact: true }).click();
   await page.getByLabel("Account CSV file").setInputFiles(accountsPath);
   await page.getByLabel("Engagement JSON file").setInputFiles(invalidSignalsPath);
@@ -91,13 +100,15 @@ test("keeps failed uploads atomic and applies a validated two-file refresh", asy
 test("exposes the review queue and downloads a reproducible full ranking", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await openDashboard(page);
-  await page.getByRole("button", { name: /quality flags/i }).click();
+  await page.getByRole("button", { name: /Data tools/i }).click();
+  await page.getByRole("button", { name: /Review issues/i }).click();
   await expect(page.getByText("Review queue", { exact: true })).toBeVisible();
   await expect(page.locator(".review-item").first()).toContainText("Suggested CRM correction");
   await page.getByLabel("Filter review queue by category").selectOption("arr");
   await expect(page.locator(".review-item").first()).toContainText("ARR");
   await page.keyboard.press("Escape");
 
+  await page.getByRole("button", { name: /Data tools/i }).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export full ranking", exact: true }).click();
   const download = await downloadPromise;
@@ -136,6 +147,7 @@ test("renders policy-checked AI and deterministic fallback actions without reran
 
   await openDashboard(page);
   const leader = await page.getByTestId("ranking-table").locator("tbody tr").first().locator("td").nth(1).innerText();
+  await page.getByRole("button", { name: "Agent actions", exact: true }).click();
   await page.getByRole("button", { name: "Interpret daily queues", exact: true }).click();
   await expect(page.getByTestId("ranking-table").locator("tbody tr").first()).toContainText("AI interpretation for");
   await expect(page.locator(".agent-source")).toHaveText(/AI interpreted/i);
@@ -152,8 +164,9 @@ test("supports keyboard dismissal and a 390px mobile viewport without page overf
   await expect(page.getByLabel("Select persona")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
-  await page.getByRole("button", { name: "Review issues", exact: true }).focus();
-  await expect(page.getByRole("button", { name: "Review issues", exact: true })).toBeFocused();
+  await page.getByRole("button", { name: /Data tools/i }).click();
+  await page.getByRole("button", { name: /Review issues/i }).focus();
+  await expect(page.getByRole("button", { name: /Review issues/i })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByText("Review queue", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
