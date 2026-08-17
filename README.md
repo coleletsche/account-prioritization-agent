@@ -2,7 +2,7 @@
 
 A desktop-first Next.js application that validates CRM account and engagement exports, deterministically ranks the complete eligible account book, and generates policy-checked AI outreach plans on demand. Every row includes reproducible scores, a P0–P3 band, and recent signals; AI-authored Why now, action, and call-plan guidance appears only after explicit generation.
 
-**Live reviewer app:** [account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app](https://account-prioritization-agent-itx4cs3ir-cole-1249s-projects.vercel.app)
+**Live reviewer app:** [account-prioritization-agent-five.vercel.app](https://account-prioritization-agent-five.vercel.app/)
 
 ## What reviewers can do
 
