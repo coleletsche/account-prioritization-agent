@@ -5,7 +5,7 @@ function runtimeIssue(input: Omit<DataQualityIssue, "id">): DataQualityIssue {
   return { ...input, id: stableId("issue", JSON.stringify(input)) };
 }
 
-export function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): DataQualityIssue[] {
+function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): DataQualityIssue[] {
   const issues: DataQualityIssue[] = [];
 
   for (const organization of data.organizations) {
@@ -15,6 +15,9 @@ export function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): D
         severity: "medium",
         source: "resolution",
         entityName: organization.canonicalName,
+        organizationId: organization.id,
+        relatedRowNumbers: organization.sourceRows,
+        fieldNames: ["last_contact_date"],
         message: "Last-contact date is after the prioritization date.",
         evidence: `${organization.lastContactDate} is later than ${asOfDate}`,
         recommendedAction: "Confirm the CRM activity date; timing is held at the neutral score until corrected.",
@@ -30,6 +33,9 @@ export function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): D
         source: "engagement",
         rowNumber: engagement.rowNumber,
         entityName: organization.canonicalName,
+        organizationId: organization.id,
+        relatedRowNumbers: [engagement.rowNumber],
+        fieldNames: ["event_date"],
         message: "Engagement signal is after the prioritization date.",
         evidence: `${engagement.eventType} on ${engagement.eventDate} is later than ${asOfDate}`,
         recommendedAction: "Confirm the signal timestamp; future engagement is excluded from intent scoring.",

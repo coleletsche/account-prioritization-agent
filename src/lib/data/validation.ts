@@ -1,13 +1,16 @@
 import Papa from "papaparse";
 import { z } from "zod";
 import { ACCOUNT_TIERS, EVENT_TYPES, type AccountRecord, type DataQualityIssue, type EngagementSignal, type ParsedAccounts, type ParsedEngagements } from "./types";
-import { isIsoDate, parseWebsiteDomain, stableId, validOrganizationName } from "./normalize";
+import { isIsoDate, parseDomain, parseWebsiteDomain, stableId, validOrganizationName } from "./normalize";
+import { validationStatusFromIssues } from "./status";
 
 const ACCOUNT_HEADERS = ["account_name", "industry", "arr", "last_contact_date", "account_tier", "website", "region", "owner"] as const;
 const ENGAGEMENT_FIELDS = ["account_name", "event_type", "event_date", "event_count"] as const;
 
 const rawAccountSchema = z.object({
+  account_id: z.string().optional().default(""),
   account_name: z.string(),
+  aliases: z.string().optional().default(""),
   industry: z.string(),
   arr: z.string(),
   last_contact_date: z.string(),
@@ -15,10 +18,13 @@ const rawAccountSchema = z.object({
   website: z.string(),
   region: z.string(),
   owner: z.string(),
+  do_not_contact: z.string().optional().default(""),
 });
 
 const rawEngagementSchema = z.object({
+  account_id: z.string().optional().default(""),
   account_name: z.string(),
+  domain: z.string().optional().default(""),
   event_type: z.string(),
   event_date: z.string(),
   event_count: z.number(),
@@ -33,6 +39,14 @@ export class DataImportError extends Error {
 
 function issue(input: Omit<DataQualityIssue, "id">): DataQualityIssue {
   return { ...input, id: stableId("issue", JSON.stringify(input)) };
+}
+
+function parseSuppression(value: string): boolean | undefined | "invalid" {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return undefined;
+  if (["true", "yes", "1", "suppressed"].includes(normalized)) return true;
+  if (["false", "no", "0", "clear"].includes(normalized)) return false;
+  return "invalid";
 }
 
 export function parseAccountsCsv(csv: string): ParsedAccounts {
@@ -62,6 +76,8 @@ export function parseAccountsCsv(csv: string): ParsedAccounts {
   const records: AccountRecord[] = [];
   const issues: DataQualityIssue[] = [];
 
+  // Preserve usable rows and attach field-level issues instead of coercing bad
+  // CRM values. Downstream scoring can omit unknowns without hiding them.
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2;
     const result = rawAccountSchema.safeParse(raw);
@@ -98,7 +114,13 @@ export function parseAccountsCsv(csv: string): ParsedAccounts {
         category: "arr", severity: "medium", message: "ARR cannot be used as an account-value signal.",
         evidence: value.arr, recommendedAction: "Replace it with a nonnegative numeric value or leave it blank.", excludesFromRanking: false,
       });
-      else arr = candidate;
+      else {
+        arr = candidate;
+        if (candidate > 1_000_000_000) add({
+          category: "arr", severity: "medium", message: "ARR is unusually large and should be confirmed.",
+          evidence: value.arr, recommendedAction: "Confirm the ARR unit and currency in the CRM before relying on account value.", excludesFromRanking: false,
+        });
+      }
     } else add({
       category: "arr", severity: "low", message: "ARR is missing.", evidence: "Blank value",
       recommendedAction: "Confirm the CRM value definition and populate it when available.", excludesFromRanking: false,
@@ -128,9 +150,24 @@ export function parseAccountsCsv(csv: string): ParsedAccounts {
       recommendedAction: "Assign an SDR owner before weekly prioritization.", excludesFromRanking: true,
     });
 
+    const aliases = value.aliases.split(/[|;]/).map((alias) => alias.trim()).filter(Boolean);
+    const invalidAliases = aliases.filter((alias) => !validOrganizationName(alias));
+    if (invalidAliases.length > 0) add({
+      category: "identity", severity: "medium", message: "One or more CRM aliases are invalid.",
+      evidence: invalidAliases.join(" | "), recommendedAction: "Remove invalid aliases or replace them with confirmed organization names.", excludesFromRanking: false,
+    });
+
+    const suppression = parseSuppression(value.do_not_contact);
+    if (suppression === "invalid") add({
+      category: "suppression", severity: "high", message: "Contact-suppression status is invalid.",
+      evidence: value.do_not_contact, recommendedAction: "Use true/false, yes/no, 1/0, suppressed, or clear.", excludesFromRanking: true,
+    });
+
     const record: AccountRecord = {
       rowNumber,
+      accountId: value.account_id.trim() || undefined,
       accountName: value.account_name.trim(),
+      confirmedAliases: aliases.filter((alias) => validOrganizationName(alias)),
       industry: value.industry.trim() || undefined,
       arr,
       arrRaw: value.arr.trim() || undefined,
@@ -141,6 +178,8 @@ export function parseAccountsCsv(csv: string): ParsedAccounts {
       domain,
       region: value.region.trim(),
       owner: value.owner.trim(),
+      contactSuppressed: typeof suppression === "boolean" ? suppression : undefined,
+      validationStatus: validationStatusFromIssues(rowIssues),
       issues: rowIssues,
     };
     records.push(record);
@@ -185,6 +224,8 @@ export function parseEngagementJson(json: string): ParsedEngagements {
     const value = result.data;
     const eventType = EVENT_TYPES.find((event) => event === value.event_type);
     if (!eventType || !isIsoDate(value.event_date) || !Number.isInteger(value.event_count) || value.event_count <= 0) {
+      // Unscoreable events remain represented by a review issue; assigning a
+      // default type, date, or count would manufacture intent evidence.
       const evidence = !eventType ? `Unknown event type: ${value.event_type}` : !isIsoDate(value.event_date) ? `Invalid date: ${value.event_date}` : `Invalid count: ${value.event_count}`;
       issues.push(issue({
         category: "engagement", severity: "medium", source: "engagement", rowNumber, entityName: value.account_name,
@@ -193,7 +234,24 @@ export function parseEngagementJson(json: string): ParsedEngagements {
       }));
       return;
     }
-    records.push({ rowNumber, accountName: value.account_name.trim(), eventType, eventDate: value.event_date, eventCount: value.event_count });
+    const domain = parseDomain(value.domain);
+    if (value.domain.trim() && !domain) {
+      issues.push(issue({
+        category: "identity", severity: "medium", source: "engagement", rowNumber, entityName: value.account_name,
+        message: "Engagement domain is invalid and cannot be used for identity matching.", evidence: value.domain,
+        recommendedAction: "Use a valid hostname or provide the stable CRM account ID.", excludesFromRanking: false,
+      }));
+    }
+    records.push({
+      rowNumber,
+      accountId: value.account_id.trim() || undefined,
+      accountName: value.account_name.trim(),
+      domain,
+      eventType,
+      eventDate: value.event_date,
+      eventCount: value.event_count,
+      validationStatus: "valid",
+    });
   });
   return { records, issues };
 }
