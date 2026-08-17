@@ -114,7 +114,6 @@ Before enabling AI on a public deployment, set an OpenAI project spend cap. Then
 - `src/components/dashboard/` — dashboard, drawer, controls, upload/review, and recommendation UI
 - `e2e/` — Playwright workflows and malformed fixtures
 - [`REQUIREMENTS.md`](./REQUIREMENTS.md) — one-page product and decision brief
-- [`WALKTHROUGH.md`](./WALKTHROUGH.md) — three-minute video script and shot list
 
 ## Out of scope
 
