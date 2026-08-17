@@ -105,6 +105,8 @@ function accountStatus(account: RankedAccount, issues: DataQualityIssue[]): Vali
 }
 
 export function buildSalesAgentRequest(accounts: RankedAccount[], options: { asOfDate: string; issues: DataQualityIssue[] }): SalesAgentRequest {
+  // This is the privacy and authority boundary: only validated, compact facts
+  // cross the API, while raw exports and score calculation remain in-browser.
   return SalesAgentRequestSchema.parse({
     as_of_date: options.asOfDate,
     accounts: accounts.map((account) => {

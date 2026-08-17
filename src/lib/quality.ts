@@ -5,7 +5,7 @@ function runtimeIssue(input: Omit<DataQualityIssue, "id">): DataQualityIssue {
   return { ...input, id: stableId("issue", JSON.stringify(input)) };
 }
 
-export function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): DataQualityIssue[] {
+function getAsOfIssues(data: EntityResolutionResult, asOfDate: string): DataQualityIssue[] {
   const issues: DataQualityIssue[] = [];
 
   for (const organization of data.organizations) {

@@ -1,31 +1,29 @@
-# Account Prioritization MVP — Requirements
+# Account Priority Agent — MVP Requirements
 
-## Interpretation
+## Interpretation of the request
 
-Give Sales a dependable ranking of the complete eligible account book. The VP sees the full team view and each SDR sees every eligible owned organization. “Priority” is a deterministic ordering from recent engagement, account value, and contact staleness. An LLM may interpret the fixed result and recommend an action, but the score remains a transparent heuristic—not a conversion probability.
+Give Sales a dependable, explainable order for working the complete eligible account book. The VP needs a team-wide view; each SDR needs the same published ranking filtered to their accounts. “Priority” is a deterministic heuristic based on engagement, account value, and contact timing—not a conversion probability. AI may turn fixed evidence into seller-ready guidance, but it never validates data, calculates scores, changes rank, or overrides policy.
 
-## MVP scope and assumptions
+## MVP scope and important assumptions
 
-- Inputs are the supplied account CSV and engagement JSON, treated as CRM exports. The bundled week is August 17, 2026; users may choose another as-of date.
-- Account owner partitions rep queues. Region and industry are filters only.
-- ARR is an unconfirmed account-value proxy, not necessarily contract value or open pipeline.
-- The first-run flow requires both exports or the explicit bundled-sample shortcut. Processing, uploaded files, and agent output are session-only.
-- AI is optional and explicit: users may request one plan, generate all plans later, or opt into bulk generation at intake. It returns only `why_now`, `recommended_action`, `urgency`, `call_angle`, and `confidence`; it never scores, reorders, clears warnings, or invents evidence.
+- Users upload an account CSV and engagement JSON or explicitly choose the bundled sample. Raw files and results remain in the browser session.
+- The dashboard shows every eligible organization with filters and pagination. Owners partition rep views; industry and region filter but do not score. The VP can change weights and the as-of week; reps cannot.
+- The bundled date is August 17, 2026. ARR is an unconfirmed account-value proxy, not necessarily contract value or pipeline.
+- Validation labels records `valid`, `warning`, or `blocked`. Structural errors reject a dataset atomically. The VP can reconcile row-level issues, rerun the full pipeline, and download corrected exports; warnings clear only after revalidation.
+- AI is optional per account, in bulk after ranking, or as an intake opt-in. Only compact validated summaries reach the server; raw exports never reach the model or persistent storage.
 
-## Prioritization approach
+## Prioritization approach and key decisions
 
-Intent is event weight × `ln(1 + count)` × 30-day half-life with a small capped signal-breadth multiplier, normalized to p95. Demo requests weigh 10 versus 1 for email opens. Account value combines tier (65%) and ARR-to-p95 (35%); account score combines available value and contact staleness. Missing/future values remain unknown and are omitted. Priority preserves the 55% intent, 30% value, and 15% timing defaults, reweighted over known inputs. Bands are fixed: P0 ≥80, P1 ≥65, P2 ≥45, otherwise P3.
+Entity resolution prefers exact CRM ID, normalized domain, exact name, then confirmed alias. Ambiguous matches are held for review rather than guessed. Compatible duplicates retain aliases, the latest valid contact, and highest nonnegative ARR without summing. Exact duplicate events stay visible, but only the first scores.
 
-## Data and confidence decisions
+Intent uses event weight × `ln(1 + count)` × a 30-day half-life, plus a small capped breadth bonus. Weights are demo request 10, webinar 6, content download 5, page visit 2, and email open 1. Intent and ARR normalize to cohort p95 and cap at 100. Account value is 65% tier and 35% ARR; contact timing reaches 100 after 90 days. Default priority is 55% intent, 30% account value, and 15% timing. Unknowns stay unknown and available inputs are reweighted. Confidence remains separate. Bands are P0 ≥ 80, P1 ≥ 65, P2 ≥ 45, otherwise P3; ties resolve by intent, value, then name.
 
-Inputs are Zod validated and labeled `valid`, `warning`, or `blocked`. Required-schema failures reject refresh atomically; missing ARR/contact, negative or suspicious ARR, future dates, unknown events, invalid suppression, contradictory records, and exact duplicate events remain visible. Resolution prefers exact CRM ID, domain, name, then confirmed/deterministic alias. Ambiguous matches are never guessed. Duplicate events are preserved as evidence but the duplicate copy is explicitly blocked from scoring.
+AI returns structured `why_now`, action, urgency, call angle, and confidence. Deterministic post-model policy forces `needs_data_review` for blocked data or unresolved identity and `no_action` for suppression. Failed AI leaves ranking intact and ready to retry; placeholder text is not presented as an AI plan.
 
-Confidence is separate from score: high has no warnings, medium has usable warnings, and low is held from ranking. Deterministic policy forces `needs_data_review` for critical data or unresolved identity and `no_action` for explicit suppression, even after model output. The VP-only reconciliation workspace groups warnings by source record, allows explicit corrections and identity decisions, and reruns the complete deterministic pipeline. Warnings cannot be dismissed; they resolve only when revalidation passes. Corrected CSV/JSON exports can be downloaded, but no CRM writeback or persistence is added.
+## How the MVP will be judged
 
-## Definition of success
-
-The supplied files reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, 360 uniquely mapped signals, and 285 eligible ranked organizations. Every eligible row can generate an AI outreach plan, while ungenerated or failed plans remain clearly empty; one unresolved identity remains in human review. A reviewer can explain the first rank and generate its plan in under two minutes. In production, compare contact, meeting, and opportunity rates by band and recommended action while monitoring generation coverage, policy overrides, and review volume.
+The supplied files must reproduce 300 account rows, 360 signals, 286 resolved organizations, 14 duplicate-domain groups, 360 uniquely mapped signals, and 285 eligible rankings; the held-out identity remains visible in reconciliation. Every rank must be reproducible from visible factors, and no source record may disappear without a statistic or issue. Weight/date changes rerank immediately; corrections rescore the cohort atomically; AI never affects rank. A reviewer should find an SDR’s book, explain its first account, and generate a plan in under two minutes. Lint, unit, build, and end-to-end checks must pass. Later field evaluation should compare contact, meeting, and opportunity rates by band while monitoring AI coverage, policy overrides, and unresolved warnings.
 
 ## Non-goals and next steps
 
-No predictive ML, enrichment, live CRM sync, RBAC, persistence, territory balancing, capacity optimization, or automated outreach. Next steps are stakeholder weight calibration, stable CRM account IDs, scheduled Monday exports, outcome feedback, score-version history, and controlled experiments against the current SDR workflow.
+No live CRM sync/writeback, persistence, authentication/RBAC, predictive ML, enrichment, territory balancing, capacity optimization, or automated outreach. Next steps are stakeholder calibration, stable CRM IDs, scheduled Monday ingestion, outcome feedback and score history, controlled workflow experiments, and production controls for access, spend, monitoring, and retention.

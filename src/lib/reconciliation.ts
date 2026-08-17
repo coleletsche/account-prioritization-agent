@@ -152,6 +152,8 @@ function editEngagementRow(rows: EngagementSourceRow[], rowNumber: number, chang
 }
 
 export function createDatasetSession(sources: DatasetSources): DatasetSession {
+  // Keep immutable uploaded values beside a mutable working copy so every edit
+  // is reversible without touching the user's local CRM export.
   const originalSources = copySources(sources);
   return {
     originalSources,
@@ -174,6 +176,9 @@ export function getEngagementSource(session: DatasetSession): EngagementSourceRo
 }
 
 export function applyReconciliationAction(session: DatasetSession, action: ReconciliationAction): DatasetSession {
+  // Apply to cloned source rows first, then rebuild validation, resolution, and
+  // cohort scoring inputs from text. A thrown validation error leaves the prior
+  // session object—and therefore the published ranking—unchanged.
   let accounts = parseAccountSource(session.workingSources.accountsCsv);
   let engagements = parseEngagementSource(session.workingSources.engagementsJson);
 
@@ -186,6 +191,8 @@ export function applyReconciliationAction(session: DatasetSession, action: Recon
     engagements = engagements.filter((_, rowIndex) => rowIndex !== index);
   }
   if (action.kind === "confirm_alias") {
+    // Alias confirmation is an explicit VP decision recorded in the account
+    // source. The normal resolver must still prove the match is unambiguous.
     const organization = session.data.organizations.find((candidate) => candidate.id === action.organizationId);
     const engagement = engagements[action.engagementRowNumber - 1];
     if (!organization || !engagement) throw new Error("The selected identity record no longer exists.");

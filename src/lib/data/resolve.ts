@@ -78,7 +78,9 @@ function buildOrganization(key: string, records: AccountRecord[]): ResolvedOrgan
   };
 }
 
-export function resolveOrganizations(accounts: AccountRecord[], engagements: EngagementSignal[], parserIssues: DataQualityIssue[] = []): EntityResolutionResult {
+function resolveOrganizations(accounts: AccountRecord[], engagements: EngagementSignal[], parserIssues: DataQualityIssue[] = []): EntityResolutionResult {
+  // Stable identifiers take precedence over normalized domains and names. The
+  // fallback row key keeps malformed identities visible instead of dropping them.
   const groups = new Map<string, AccountRecord[]>();
   for (const record of accounts) {
     const nameKey = normalizeOrganizationName(record.accountName);
@@ -110,6 +112,8 @@ export function resolveOrganizations(accounts: AccountRecord[], engagements: Eng
   const resolutionIssues: DataQualityIssue[] = [];
   let matchedSignals = 0;
   for (const engagement of engagements) {
+    // Resolution is exact-only and ordered by confidence. Multiple or absent
+    // candidates are review work; this pipeline never guesses with fuzzy matching.
     let candidates: ResolvedOrganization[];
     let matchMethod: ResolutionMatchMethod;
     if (engagement.accountId) {
@@ -142,6 +146,8 @@ export function resolveOrganizations(accounts: AccountRecord[], engagements: Eng
   }
 
   for (const organization of organizations) {
+    // Preserve duplicate source events for auditability, but mark later exact
+    // copies blocked so frequency cannot be inflated in the scoring layer.
     const firstByEvent = new Map<string, EngagementSignal>();
     for (const engagement of [...organization.engagements].sort((a, b) => a.rowNumber - b.rowNumber)) {
       const duplicateKey = `${engagement.eventType}|${engagement.eventDate}|${engagement.eventCount}`;

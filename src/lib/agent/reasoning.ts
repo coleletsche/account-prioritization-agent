@@ -65,6 +65,8 @@ async function generateWithOpenAI(input: SalesAgentBatchRequest, signal: AbortSi
 }
 
 function batchesFor(input: SalesAgentRequest): SalesAgentBatchRequest[] {
+  // The public request may cover a full account book, but model-facing payloads
+  // stay bounded so structured generation is predictable and recoverable.
   const batches: SalesAgentBatchRequest[] = [];
   for (let index = 0; index < input.accounts.length; index += MODEL_BATCH_SIZE) {
     batches.push(SalesAgentBatchRequestSchema.parse({ as_of_date: input.as_of_date, accounts: input.accounts.slice(index, index + MODEL_BATCH_SIZE) }));
@@ -89,6 +91,8 @@ async function generateBatch(
   input: SalesAgentBatchRequest,
   generate: RecommendationGenerator,
 ): Promise<{ recommendations: AccountRecommendation[]; source: "ai" | "fallback"; timedOut: boolean }> {
+  // Each batch fails independently. Deterministic placeholders preserve exact
+  // account coverage without presenting fallback copy as AI-generated work.
   const fallback = deterministicRecommendations(input);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);

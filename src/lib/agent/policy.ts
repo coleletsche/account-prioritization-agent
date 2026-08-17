@@ -35,6 +35,8 @@ export function deterministicRecommendation(account: AgentAccount): AccountRecom
 }
 
 export function enforceRecommendationPolicy(account: AgentAccount, recommendation: AccountRecommendation): AccountRecommendation {
+  // Run after model parsing as a deterministic final gate. Model text can never
+  // bypass unresolved identity, blocked data, or explicit contact suppression.
   if (!account.identity_resolved || account.data_status === "blocked") {
     return {
       account_id: account.account_id,

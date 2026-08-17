@@ -202,6 +202,8 @@ export function AccountDashboard() {
   };
 
   const prepareDataset = async (nextSession: DatasetSession, label: string, options: AnalysisOptions, replacement = false) => {
+    // Build and validate the candidate result before publishing it. Replacement
+    // failures therefore leave the current dashboard session intact.
     const nextData = nextSession.data;
     const nextRanked = rankOrganizations(nextData.organizations, { asOfDate, weights });
     if (nextRanked.length === 0) throw new Error("No eligible organizations with an owner were found. Review the export and try again.");
@@ -261,6 +263,8 @@ export function AccountDashboard() {
     const nextRequest = buildSalesAgentRequest(nextRanked, { asOfDate, issues: nextIssues });
     const nextScopeKey = analysisScopeKey(asOfDate, weights, nextRanked);
     const currentAgentResult = agentResult?.scopeKey === agentScopeKey ? agentResult : undefined;
+    // Preserve generated copy only when its complete account fingerprint is
+    // unchanged; corrected evidence, score, or rank requires a fresh AI plan.
     const nextAgentResponse = currentAgentResult
       ? preserveCompatiblePlans(currentAgentResult.request, nextRequest, currentAgentResult.response)
       : ungeneratedResponse(nextRequest, agentResult ? "The corrected ranking needs fresh AI plans." : undefined);

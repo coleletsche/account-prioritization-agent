@@ -28,11 +28,9 @@ export function daysBetween(from: string, to: string): number {
   return Math.floor((dateAtUtc(to) - dateAtUtc(from)) / DAY_MS);
 }
 
-export function calculateIntentRaw(engagements: EngagementSignal[], asOfDate: string): number {
-  return calculateIntentFeatures(engagements, asOfDate).rawScore;
-}
-
 export function calculateIntentFeatures(engagements: EngagementSignal[], asOfDate: string): IntentFeatures {
+  // Intent stays deterministic: event strength is damped by log-frequency,
+  // decays on a 30-day half-life, and receives only a small breadth bonus.
   const scoreable = engagements.filter((signal) => signal.validationStatus !== "blocked" && daysBetween(signal.eventDate, asOfDate) >= 0);
   const baseScore = scoreable.reduce((total, signal) => {
     const ageDays = daysBetween(signal.eventDate, asOfDate);
@@ -92,6 +90,8 @@ export function calculateAccountFeatures(organization: ResolvedOrganization, arr
 }
 
 function weightedAvailable(values: Array<{ value: number | undefined; weight: number }>): number | undefined {
+  // Unknown CRM values are omitted and the remaining weights are normalized;
+  // they are never silently treated as zero, neutral, or maximum values.
   const available = values.filter((item): item is { value: number; weight: number } => item.value !== undefined && item.weight > 0);
   const totalWeight = available.reduce((sum, item) => sum + item.weight, 0);
   if (totalWeight === 0) return undefined;
@@ -150,6 +150,8 @@ export function rankOrganizations(
   const eligible = organizations.filter((organization) => organization.eligible && organization.owner);
   const intentFeatures = new Map(eligible.map((organization) => [organization.id, calculateIntentFeatures(organization.engagements, options.asOfDate)]));
   const rawIntent = new Map(eligible.map((organization) => [organization.id, intentFeatures.get(organization.id)?.rawScore ?? 0]));
+  // Cohort-relative p95 caps keep outliers bounded. Any reconciled ARR or
+  // engagement therefore requires a full-book rescore, not a row-only update.
   const intentP95 = percentile95([...rawIntent.values()]);
   const arrP95 = percentile95(eligible.map((organization) => organization.arr).filter((value): value is number => value !== undefined));
 
@@ -195,15 +197,4 @@ export function rankOrganizations(
     ownerCounts.set(owner, ownerRank);
     return { ...account, rank: index + 1, ownerRank, asOfDate: options.asOfDate, weights: { ...weights } };
   });
-}
-
-export function buildDailyQueues(accounts: RankedAccount[], perOwner = 10): Record<string, RankedAccount[]> {
-  const queues: Record<string, RankedAccount[]> = {};
-  for (const account of accounts) {
-    const owner = account.organization.owner;
-    if (!owner) continue;
-    const queue = queues[owner] ?? [];
-    if (queue.length < perOwner) queues[owner] = [...queue, account];
-  }
-  return Object.fromEntries(Object.entries(queues).sort(([left], [right]) => left.localeCompare(right)));
 }

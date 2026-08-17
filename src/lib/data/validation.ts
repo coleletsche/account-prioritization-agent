@@ -76,6 +76,8 @@ export function parseAccountsCsv(csv: string): ParsedAccounts {
   const records: AccountRecord[] = [];
   const issues: DataQualityIssue[] = [];
 
+  // Preserve usable rows and attach field-level issues instead of coercing bad
+  // CRM values. Downstream scoring can omit unknowns without hiding them.
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2;
     const result = rawAccountSchema.safeParse(raw);
@@ -222,6 +224,8 @@ export function parseEngagementJson(json: string): ParsedEngagements {
     const value = result.data;
     const eventType = EVENT_TYPES.find((event) => event === value.event_type);
     if (!eventType || !isIsoDate(value.event_date) || !Number.isInteger(value.event_count) || value.event_count <= 0) {
+      // Unscoreable events remain represented by a review issue; assigning a
+      // default type, date, or count would manufacture intent evidence.
       const evidence = !eventType ? `Unknown event type: ${value.event_type}` : !isIsoDate(value.event_date) ? `Invalid date: ${value.event_date}` : `Invalid count: ${value.event_count}`;
       issues.push(issue({
         category: "engagement", severity: "medium", source: "engagement", rowNumber, entityName: value.account_name,

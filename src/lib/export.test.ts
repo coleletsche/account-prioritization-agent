@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { buildSalesAgentRequest, deterministicRecommendations } from "./agent";
 import { processCrmExports } from "./data";
 import { buildRankingCsv } from "./export";
-import { getAsOfIssues } from "./quality";
+import { getEffectiveReviewQueue } from "./quality";
 import { DEFAULT_WEIGHTS, rankOrganizations } from "./scoring";
 
 const fixture = (name: string) => readFileSync(resolve(process.cwd(), "public/sample-data", name), "utf8");
@@ -34,6 +34,6 @@ describe("review and export workflow", () => {
       { account_name: "Acme", event_type: "demo_request", event_date: "2026-08-21", event_count: 1 },
     ]));
 
-    expect(getAsOfIssues(data, "2026-08-17").map((issue) => issue.category)).toEqual(["contact_date", "engagement"]);
+    expect(getEffectiveReviewQueue(data, "2026-08-17").map((issue) => issue.category)).toEqual(["contact_date", "engagement"]);
   });
 });

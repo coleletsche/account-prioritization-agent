@@ -46,7 +46,7 @@ npx playwright install chromium
 npm run verify
 ```
 
-`npm run verify` runs ESLint, 69 Vitest unit/component tests, a production build, and six Playwright workflows covering first-run intake, on-demand and optional bulk AI plans, the complete account book, personas, reranking, source-backed reconciliation, replacement uploads, corrected exports, partial coverage, and the 390px mobile layout.
+`npm run verify` runs ESLint, 59 Vitest unit/component tests, a production build, and six Playwright workflows covering first-run intake, on-demand and optional bulk AI plans, the complete account book, personas, reranking, source-backed reconciliation, replacement uploads, corrected exports, partial coverage, and the 390px mobile layout.
 
 Individual commands:
 

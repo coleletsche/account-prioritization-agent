@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processCrmExports, type EngagementSignal, type ResolvedOrganization } from "./data";
-import { DEFAULT_WEIGHTS, calculateIntentFeatures, calculateIntentRaw, calculateTimingScore, calculateValueScore, normalizeToP95, percentile95, priorityBandFor, rankOrganizations, redistributeWeights } from "./scoring";
+import { DEFAULT_WEIGHTS, calculateIntentFeatures, calculateTimingScore, calculateValueScore, normalizeToP95, percentile95, priorityBandFor, rankOrganizations, redistributeWeights } from "./scoring";
 
 const fixture = (name: string) => readFileSync(resolve(process.cwd(), "public/sample-data", name), "utf8");
 const assessment = () => processCrmExports(fixture("accounts.csv"), fixture("engagement_signals.json"));
@@ -18,10 +18,14 @@ function signal(eventDate: string, overrides: Partial<EngagementSignal> = {}): E
   return { rowNumber: 1, accountName: "Acme", eventType: "page_visit", eventDate, eventCount: 4, validationStatus: "valid", ...overrides };
 }
 
+function intentRaw(signals: EngagementSignal[], asOfDate: string): number {
+  return calculateIntentFeatures(signals, asOfDate).rawScore;
+}
+
 describe("deterministic priority scoring", () => {
   it("applies a 30-day half-life to raw engagement intent", () => {
-    const fresh = calculateIntentRaw([signal("2026-08-17")], "2026-08-17");
-    const aged = calculateIntentRaw([signal("2026-07-18")], "2026-08-17");
+    const fresh = intentRaw([signal("2026-08-17")], "2026-08-17");
+    const aged = intentRaw([signal("2026-07-18")], "2026-08-17");
     expect(aged).toBeCloseTo(fresh / 2, 8);
   });
 
@@ -40,12 +44,12 @@ describe("deterministic priority scoring", () => {
   });
 
   it("uses event strength, log frequency, and signal breadth without scoring blocked duplicates", () => {
-    const email = calculateIntentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 1 })], "2026-08-17");
-    const demo = calculateIntentRaw([signal("2026-08-17", { eventType: "demo_request", eventCount: 1 })], "2026-08-17");
+    const email = intentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 1 })], "2026-08-17");
+    const demo = intentRaw([signal("2026-08-17", { eventType: "demo_request", eventCount: 1 })], "2026-08-17");
     expect(demo).toBeCloseTo(email * 10, 8);
 
-    const oneOpen = calculateIntentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 1 })], "2026-08-17");
-    const nineOpens = calculateIntentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 9 })], "2026-08-17");
+    const oneOpen = intentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 1 })], "2026-08-17");
+    const nineOpens = intentRaw([signal("2026-08-17", { eventType: "email_open", eventCount: 9 })], "2026-08-17");
     expect(nineOpens / oneOpen).toBeCloseTo(Math.log1p(9) / Math.log1p(1), 8);
 
     const sameType = calculateIntentFeatures([
@@ -60,7 +64,7 @@ describe("deterministic priority scoring", () => {
     expect(broad.signalBreadth).toBe(2);
     expect(broad.rawScore).toBeGreaterThan(email + email * 2);
 
-    const duplicateBlocked = calculateIntentRaw([
+    const duplicateBlocked = intentRaw([
       signal("2026-08-17", { rowNumber: 1, eventType: "demo_request", eventCount: 1 }),
       signal("2026-08-17", { rowNumber: 2, eventType: "demo_request", eventCount: 1, validationStatus: "blocked", duplicateOfRowNumber: 1 }),
     ], "2026-08-17");
